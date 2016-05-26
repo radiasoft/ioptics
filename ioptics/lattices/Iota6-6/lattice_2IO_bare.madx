@@ -118,7 +118,7 @@ ibpmd2l: ibpm;
 qmd4l: quadrupole,l:= 0.21,k1:=kqd4l ;
 qmd3l: quadrupole,l:= 0.21,k1:=kqd3l ;
 !rfc: rfcavity,l:= 0.05,volt:= 0.001,lag:= 0.5,harmon:= 4;
-rfc: rfcavity,l:= 0.05,volt:= 0.000,lag:= 0.5,harmon:= 4;
+rfc: drift,l:= 0.05;
 qmd2l: quadrupole,l:= 0.21,k1:=kqd2l ;
 sd1l: sextupole,l:= 0.095,k2:=sk3 ;
 qmd1l: quadrupole,l:= 0.21,k1:=kqd1l ;
@@ -148,9 +148,9 @@ qma2l: quadrupole,l:= 0.21,k1:=kqa2l ;
 qma1l: quadrupole,l:= 0.21,k1:=kqa1l ;
 ibpma1l: ibpm;
 liota := 39.96822971;
-move := 6.711519143;						!NOW EDIT HERE FOR REMOVING FIRST DRIFT
-!iota: sequence, l = 39.96822971;
-iota: sequence, l = 38.16822971;
+move := 5.811519143;						!NOW EDIT HERE FOR REMOVING FIRST DRIFT
+iota: sequence, l = 39.96822971;
+!iota: sequence, l = 38.16822971;
 nlr2, at = 6.711519143 - move;
 ibpmb2r, at = 6.756519143 - move;
 qmb4r, at = 6.969019143 - move;
