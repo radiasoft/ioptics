@@ -127,12 +127,13 @@ def calculate_invariants(array,beta,alpha,t,c):
     return np.transpose(np.array(Harray)),np.transpose(np.array(Iarray))
 
 
-def get_all_turns(directory,npart):
+def get_all_turns(directory,npart,mod=1):
     """
     Pull particle data from multiple files and return a 3D array with all 6D particle data over multiple turns.
     Excludes lost particles from return.
     :param directory -  directory with particle data:
     :param npart - maximum number of particles in a file:
+    :param mod - Optional, Set interval of files to grab (mod=1 is all, mod=4 would be every 4th):
     :return 3D array with structure [turnNumber,particle,dimension]:
     """
     turn = []
@@ -141,7 +142,7 @@ def get_all_turns(directory,npart):
     filelist = sorted_turn_list(directory)
 
     for i, bunchFile in enumerate(filelist):
-        if i % 4 == 0:
+        if i % mod == 0:
             print bunchFile
             bunchIn = get_bunch(directory + '/' + bunchFile)
             # header, bunchIn = elliptic_sp.get_particles(directory + '/' + bunchFile)
