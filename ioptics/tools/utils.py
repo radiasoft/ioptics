@@ -35,7 +35,7 @@ def sorted_turn_list(directory):
     fileList = []
     sortedList = []
     for fl in os.listdir(directory):
-        if os.path.splitext(fl)[1] == '.h5':
+        if os.path.splitext(fl)[1] == '.h5' and fl.find('particles') > -1:
             filename = os.path.basename(fl)
             basename = os.path.splitext(filename)[0]
             fileList.append((int(re.findall(r'\d+', basename)[0]),filename))
@@ -56,9 +56,9 @@ def lostlist(directory,npart):
     """
     lostlist = []
     lastfile = sorted_turn_list(directory)[-1]
-    print lastfile
+    print "Last turn in directory:%s" % lastfile
     bunchIn = get_bunch(directory + '/' + lastfile)
-    print bunchIn.shape
+    print "Shape of last bunch array:%s" % bunchIn.shape
     for i in range(npart):
         if not np.any(bunchIn[:, 6] == i):
             lostlist.append(i)
@@ -86,7 +86,7 @@ def get_invariants(directory,npart,beta,alpha,t,c):
     for bunchFile in filelist:
         if bunchFile.endswith('.h5') and bunchFile.find('particles') != -1:
             bunchIn = get_bunch(directory + '/' + bunchFile)
-            # header, bunchIn = elliptic_sp.get_particles(directory + '/' + bunchFile)
+
 
             for lost in lostParts:
                 rowlost = np.where(bunchIn[:, 6] == lost)[0]
@@ -143,9 +143,8 @@ def get_all_turns(directory,npart,mod=1):
 
     for i, bunchFile in enumerate(filelist):
         if i % mod == 0:
-            print bunchFile
             bunchIn = get_bunch(directory + '/' + bunchFile)
-            # header, bunchIn = elliptic_sp.get_particles(directory + '/' + bunchFile)
+
 
             for lost in lostParts:
                 rowlost = np.where(bunchIn[:, 6] == lost)[0]
@@ -160,5 +159,33 @@ def get_all_turns(directory,npart,mod=1):
 
             sBunch = bunchIn[np.argsort(bunchIn[:, 6])]
             turn.append(sBunch)
-            print bunchFile
+            #print bunchFile
+    return np.array(turn)
+
+def get_all_lost(directory,npart):
+
+    turn = []
+    lostParts = []
+    lost_list = utils.lostlist(directory, npart)
+    filelist = utils.sorted_turn_list(directory)
+
+    for i, bunchFile in enumerate(filelist):
+        if i % 4 == 0:
+            bunchIn = get_bunch(directory + '/' + bunchFile)
+
+
+            for lost in lost_list:
+                rowlost = np.where(bunchIn[:, 6] == lost)[0]
+                try:
+                    rowval = rowlost[0]
+                except IndexError:
+                    rowval = None
+                if rowval != None:
+                    lostParts.append(bunchIn[rowval,:])
+
+                #rowval = None
+
+            sBunch = lostParts[np.argsort(lostParts[:, 6])]
+            turn.append(sBunch)
+            #print bunchFile
     return np.array(turn)
