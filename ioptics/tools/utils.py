@@ -58,7 +58,7 @@ def lostlist(directory,npart):
     lastfile = sorted_turn_list(directory)[-1]
     print "Last turn in directory:%s" % lastfile
     bunchIn = get_bunch(directory + '/' + lastfile)
-    print "Shape of last bunch array:%s" % bunchIn.shape
+    print "Shape of last bunch array: (%s,%s)" % % (bunchIn.shape[0], bunchIn.shape[1])
     for i in range(npart):
         if not np.any(bunchIn[:, 6] == i):
             lostlist.append(i)
