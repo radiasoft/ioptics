@@ -3,3 +3,4 @@
 checkpoint/
 log
 *.h5
+*.pdf
