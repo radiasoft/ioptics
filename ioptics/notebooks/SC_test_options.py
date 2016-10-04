@@ -45,7 +45,7 @@ opts.add("solver", "2dopen-hockney", "solver to use, '2dopen-hockney','3dopen-ho
 opts.add("use_maps", "none", "use maps for propagation either all, none, onlyrf, nonrf")    #none means chef propagate
 #opts.add("use_maps", "all", "use maps for propagation either all, none, onlyrf, nonrf")
 #opts.add("allmaps", False, "Use all maps for propagation", bool)
-opts.add("stepper", "splitoperator", "Simulation stepper, either 'independent','elements','splitoperator','soelements'", str)
+opts.add("requested_stepper", "splitoperator", "Simulation stepper, either 'independent','elements','splitoperator','soelements'", str)
 
 #----------MPI STUFF---------------------
 opts.add("comm_divide", 8, "size of communicator")
