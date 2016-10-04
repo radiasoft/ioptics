@@ -1,7 +1,11 @@
 !V8.2 1IO centered lattice updated for proton beam for space charge tests
-!September 26 - This version has been updated to work at t=0.3 with dQ = -0.03. The quads and the !linear components of the NL element were updated using Sasha Romanov's code to correct for !assymetries with space charge.
-!Nonlinear magnet settings: t=0.3, c=0.01
+!September 26 - This version has been updated to work at t=0.3 with dQ = -0.03. The quads and the linear components of the NL element were updated using Sasha Romanov's code to correct for assymetries with space charge.
 !
+! Zero momentum spread assumed.
+!
+! Tune adjustments - dQ = -0.03
+!
+! Nonlinear magnet settings: t=0.3, c=0.01
 !
 !---------------------- (USED) Proton beam parameters ---------------------------------
 beam,particle=proton,bunched=true,radiate=false,mass:= 0.938272046,charge:= 1,energy:=0.940772046,npart:=10000000000, gamma:=1.00266447, beta:=0.07285411, pc:=0.06853911

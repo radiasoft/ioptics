@@ -1,9 +1,11 @@
 !V8.2 1IO centered lattice updated for proton beam for space charge tests - dQ=-0.03 version with soft fitting!
-!Nonlinear magnet settings: t=0.1, c=0.01
-!This version constructed using Sasha's updated codes.
+!October 4, 2016 - This version has been updated to work at t=0.1 with dQ = -0.03 using Sasha Romanov's code and a soft fitting to the phase advance requirements of the lattice. No further adjustments were made to fit for assymetries in the bunch through the nonlinear element.
 !
+! Zero momentum spread assumed.
 !
-!This lattice is the standard V8.2 lattice with 1 NL section - it was provided by Sasha Romanov
+! Tune adjustments - dQ = -0.03
+!
+! Nonlinear magnet settings: t=0.1, c=0.01
 !
 !---------------------- (USED) Proton beam parameters ---------------------------------
 beam,particle=proton,bunched=true,radiate=false,mass:= 0.938272046,charge:= 1,energy:=0.940772046,npart:=10000000000, gamma:=1.00266447, beta:=0.07285411, pc:=0.06853911

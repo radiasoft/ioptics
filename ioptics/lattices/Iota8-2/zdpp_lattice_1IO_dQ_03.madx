@@ -1,9 +1,12 @@
-!V8.2 1IO centered lattice updated for proton beam for space charge tests - dQ=-0.03 version with soft fitting and new quads. Quad gradients are fit for t=0.3 but this lattice version HAS NO NL ELEMENT. This lattice is simply referenced for computing twiss parameters and normal coordinates.
-!This version constructed using Sasha's updated codes.
-!Nathan Cook 9/26/2016
+!V8.2 1IO centered lattice updated for proton beam for space charge tests - dQ=-0.03 version with soft fitting and new quads. 
+!September 26, 2016 - Quad gradients are fit for t=0.3 but this lattice version HAS NO NL ELEMENT. This lattice is simply referenced for computing twiss parameters and normal coordinates.
 !
 !
-!This lattice is the standard V8.2 lattice with 1 NL section - it was provided by Sasha Romanov
+! Zero momentum spread assumed.
+!
+! Tune adjustments - dQ = -0.03
+!
+! No nonlinear element
 !
 !---------------------- (USED) Proton beam parameters ---------------------------------
 beam,particle=proton,bunched=true,radiate=false,mass:= 0.938272046,charge:= 1,energy:=0.940772046,npart:=10000000000, gamma:=1.00266447, beta:=0.07285411, pc:=0.06853911
