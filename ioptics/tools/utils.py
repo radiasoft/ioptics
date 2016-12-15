@@ -26,7 +26,7 @@ def get_bunch(inputfile):
 
     return particles
 
-def sorted_turn_list(directory):
+def sorted_turn_list(directory, search_string = 'particles'):
     """
     Return a list of sorted bunch files in a directory
     :param directory - Directory location with Synergia bunch files.:
@@ -35,7 +35,7 @@ def sorted_turn_list(directory):
     fileList = []
     sortedList = []
     for fl in os.listdir(directory):
-        if os.path.splitext(fl)[1] == '.h5' and fl.find('particles') > -1:
+        if os.path.splitext(fl)[1] == '.h5' and fl.find(search_string) > -1:
             filename = os.path.basename(fl)
             basename = os.path.splitext(filename)[0]
             fileList.append((int(re.findall(r'\d+', basename)[0]),filename))
@@ -46,7 +46,7 @@ def sorted_turn_list(directory):
     return sortedList
 
 
-def lostlist(directory,npart):
+def lostlist(directory, search_string, npart):
     """
     Find particle data file from final turn in 'directory' and return a list of missing particles based on
     particle ID.
@@ -55,7 +55,7 @@ def lostlist(directory,npart):
     :return lostlist - List of IDs for lost particles:
     """
     lostlist = []
-    lastfile = sorted_turn_list(directory)[-1]
+    lastfile = sorted_turn_list(directory, search_string)[-1]
     print "Last turn in directory:%s" % lastfile
     bunchIn = get_bunch(directory + '/' + lastfile)
     print "Shape of last bunch array: (%s,%s)" % (bunchIn.shape[0], bunchIn.shape[1])
@@ -65,7 +65,8 @@ def lostlist(directory,npart):
 
     return lostlist
 
-def get_invariants(directory,npart,beta,alpha,t,c):
+
+def get_invariants(directory, search_string, npart ,beta,alpha, t, c):
     """
     Calculate the invariants for particles in an elliptic potential for a series of particle files. Excludes
     lost particles from calculation.
@@ -79,9 +80,9 @@ def get_invariants(directory,npart,beta,alpha,t,c):
     """
     Harray = []
     Iarray = []
-    lostParts = lostlist(directory, npart)
+    lostParts = lostlist(directory, search_string, npart)
 
-    filelist = sorted_turn_list(directory)
+    filelist = sorted_turn_list(directory, search_string)
 
     for bunchFile in filelist:
         if bunchFile.endswith('.h5') and bunchFile.find('particles') != -1:
@@ -127,7 +128,7 @@ def calculate_invariants(array,beta,alpha,t,c):
     return np.transpose(np.array(Harray)),np.transpose(np.array(Iarray))
 
 
-def get_all_turns(directory,npart,mod=1):
+def get_all_turns(directory, search_string, npart,mod=1):
     """
     Pull particle data from multiple files and return a 3D array with all 6D particle data over multiple turns.
     Excludes lost particles from return.
@@ -138,8 +139,8 @@ def get_all_turns(directory,npart,mod=1):
     """
     turn = []
 
-    lostParts = lostlist(directory, npart)
-    filelist = sorted_turn_list(directory)
+    lostParts = lostlist(directory, search_string, npart)
+    filelist = sorted_turn_list(directory, search_string)
 
     for i, bunchFile in enumerate(filelist):
         if i % mod == 0:
@@ -162,12 +163,13 @@ def get_all_turns(directory,npart,mod=1):
             #print bunchFile
     return np.array(turn)
 
-def get_all_lost(directory,npart):
+
+def get_all_lost(directory, search_string, npart):
 
     turn = []
     lostParts = []
-    lost_list = utils.lostlist(directory, npart)
-    filelist = utils.sorted_turn_list(directory)
+    lost_list = lostlist(directory, search_string, npart)
+    filelist = sorted_turn_list(directory, search_string)
 
     for i, bunchFile in enumerate(filelist):
         if i % 4 == 0:
