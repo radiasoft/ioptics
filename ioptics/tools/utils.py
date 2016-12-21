@@ -26,7 +26,8 @@ def get_bunch(inputfile):
 
     return particles
 
-def sorted_turn_list(directory, search_string = 'particles'):
+
+def sorted_turn_list(directory, search_string='particles'):
     """
     Return a list of sorted bunch files in a directory
     :param directory - Directory location with Synergia bunch files.:
@@ -108,7 +109,7 @@ def get_invariants(directory, search_string, npart ,beta,alpha, t, c):
     return np.transpose(np.array(Harray)), np.transpose(np.array(Iarray))
 
 
-def calculate_invariants(array,beta,alpha,t,c):
+def calculate_invariants(array, beta, alpha, t, c):
     """
     Calculates invariants from array already loaded to memory of form [turn,particle,dimension]
     :param array -  Array of particle coordinates from which to calculate invariants:
@@ -121,14 +122,14 @@ def calculate_invariants(array,beta,alpha,t,c):
     Harray = []
     Iarray = []
     for turn in range(array.shape[0]):
-        Hval,Ival = calc_bunch_Inv(array[turn,:,:],beta,alpha,t,c)
+        Hval, Ival = calc_bunch_Inv(array[turn, :, :], beta, alpha, t, c)
         Harray.append(Hval)
         Iarray.append(Ival)
 
-    return np.transpose(np.array(Harray)),np.transpose(np.array(Iarray))
+    return np.transpose(np.array(Harray)), np.transpose(np.array(Iarray))
 
 
-def get_all_turns(directory, search_string, npart,mod=1):
+def get_all_turns(directory, search_string, npart, mod=1):
     """
     Pull particle data from multiple files and return a 3D array with all 6D particle data over multiple turns.
     Excludes lost particles from return.
@@ -146,7 +147,6 @@ def get_all_turns(directory, search_string, npart,mod=1):
         if i % mod == 0:
             bunchIn = get_bunch(directory + '/' + bunchFile)
 
-
             for lost in lostParts:
                 rowlost = np.where(bunchIn[:, 6] == lost)[0]
                 try:
@@ -160,7 +160,7 @@ def get_all_turns(directory, search_string, npart,mod=1):
 
             sBunch = bunchIn[np.argsort(bunchIn[:, 6])]
             turn.append(sBunch)
-            #print bunchFile
+            # print bunchFile
     return np.array(turn)
 
 
@@ -175,7 +175,6 @@ def get_all_lost(directory, search_string, npart):
         if i % 4 == 0:
             bunchIn = get_bunch(directory + '/' + bunchFile)
 
-
             for lost in lost_list:
                 rowlost = np.where(bunchIn[:, 6] == lost)[0]
                 try:
@@ -185,9 +184,50 @@ def get_all_lost(directory, search_string, npart):
                 if rowval != None:
                     lostParts.append(bunchIn[rowval,:])
 
-                #rowval = None
+                # rowval = None
 
             sBunch = lostParts[np.argsort(lostParts[:, 6])]
             turn.append(sBunch)
-            #print bunchFile
+            # print bunchFile
     return np.array(turn)
+
+
+def covariance_matrix(array):
+    cov_matrix = np.empty([4, 4])
+    for i in range(4):
+        for j in range(4):
+            cov_matrix[i, j] = np.average(array[:, i] * array[:, j])
+
+    return cov_matrix
+
+
+def mismatch_parameter(base, array):
+    cov_matrix_0 = covariance_matrix(base)
+    cov_matrix_s = covariance_matrix(array)
+
+    Sigma_0 = np.linalg.det(cov_matrix_0)**(-0.25) * cov_matrix_0
+    Sigma_s = np.linalg.det(cov_matrix_s)**(-0.25) * cov_matrix_s
+
+    mismatch_parameter = 0.25 * np.trace(np.dot(np.linalg.inv(Sigma_0), Sigma_s))
+
+    return mismatch_parameter
+
+
+def mismatch_2(base, array):
+
+    if base.shape[0] == 4 and array.shape[0] == 4:
+
+        Sigma_0 = np.linalg.det(base)**(-0.25) * base
+        Sigma_s = np.linalg.det(array)**(-0.25) * array
+
+        mismatch_parameter = 0.25 * np.trace(np.dot(np.linalg.inv(Sigma_0), Sigma_s))
+    else:
+        cov_matrix_0 = covariance_matrix(base)
+        cov_matrix_s = covariance_matrix(array)
+
+        Sigma_0 = np.linalg.det(cov_matrix_0) ** (-0.25) * cov_matrix_0
+        Sigma_s = np.linalg.det(cov_matrix_s) ** (-0.25) * cov_matrix_s
+
+        mismatch_parameter = 0.25 * np.trace(np.dot(np.linalg.inv(Sigma_0), Sigma_s))
+
+    return mismatch_parameter
