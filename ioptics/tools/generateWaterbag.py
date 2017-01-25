@@ -94,7 +94,7 @@ class EllipticWaterbag:
             y0 = np.sqrt(newH)
             self.emittance = newH
             yMax = newton(self.whatsLeft, y0) 
-            xMax = yMax
+            xMax = self.ellipticC
             trialValue = 1e10
             while trialValue >= newH:
                 xTrial = 2.*(0.5 - random.random())*xMax
@@ -142,7 +142,7 @@ class EllipticWaterbag:
             y0 = np.sqrt(newH)
             self.emittance = newH
             yMax = newton(self.whatsLeft, y0)
-            xMax = yMax
+            xMax = self.ellipticC
             trialValue = 1e10
             while trialValue >= newH:
                 xTrial = 2. * (0.5 - random.random()) * xMax
