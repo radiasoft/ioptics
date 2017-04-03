@@ -164,7 +164,7 @@ def get_all_turns(directory, search_string, npart, mod=1):
     return np.array(turn)
 
 
-def get_all_lost(directory, search_string, npart):
+def get_all_lost(directory, search_string, npart, mod=1):
 
     turn = []
     lostParts = []
@@ -172,7 +172,7 @@ def get_all_lost(directory, search_string, npart):
     filelist = sorted_turn_list(directory, search_string)
 
     for i, bunchFile in enumerate(filelist):
-        if i % 4 == 0:
+        if i % mod == 0:
             bunchIn = get_bunch(directory + '/' + bunchFile)
 
             for lost in lost_list:
@@ -201,19 +201,14 @@ def covariance_matrix(array):
     return cov_matrix
 
 
-def mismatch_parameter(base, array):
-    cov_matrix_0 = covariance_matrix(base)
-    cov_matrix_s = covariance_matrix(array)
-
-    Sigma_0 = np.linalg.det(cov_matrix_0)**(-0.25) * cov_matrix_0
-    Sigma_s = np.linalg.det(cov_matrix_s)**(-0.25) * cov_matrix_s
-
-    mismatch_parameter = 0.25 * np.trace(np.dot(np.linalg.inv(Sigma_0), Sigma_s))
-
-    return mismatch_parameter
-
-
-def mismatch_2(base, array):
+def calculate_mismatch(base, array):
+    """
+    'Smart' mismatch function. Will accept either the Nx6 phase space array of the bunch or the 4x4 transverse
+    covariance matrix. Returns mismatch parameter between two arrays in either case.
+    :param base: Either Nx6 or 4x4 array, ideally of a matched distribution.
+    :param array: Either Nx6 or 4x4 array, ideally of the distribution to compare to.
+    :return: The mismatch parameter, should be >= 1.
+    """
 
     if base.shape[0] == 4 and array.shape[0] == 4:
 
