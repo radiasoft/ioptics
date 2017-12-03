@@ -20,6 +20,9 @@
 \documentclass[aps,prstab,twocolumn, groupedaddress]{revtex4-1}
 
 \usepackage{siunitx}
+\usepackage{liecolon}
+\usepackage{nicefrac}
+\usepackage{units}
 \usepackage{color}
 \usepackage{graphicx}
 
@@ -107,6 +110,31 @@
 
 %TODO: Note apertures
 \section{Introduction}
+
+ %The Integrable Optics Test Accelerator (IOTA) is a small ring, currently under construction at Fermilab, which will explore advanced concepts in beam dynamics with low-energy proton beams with high space charge tune depression. Through use of a special nonlinear magnet insertion, large tune spread with amplitude can be achieved while preserving two integrals of motion for the single particle behavior. The stability of these invariants is particularly sensitive to collective effects such as space charge induced tune depression. 
+
+%
+
+Modern hadron accelerators such as spallation sources and neutrino factories must reach higher beam intensities to meet increasingly challenging demands on performance. For example, the European Spallation Source plans for a proton beam with \unit[5]{MW} average power~\cite{ess_report}. The Proton Improvement Plan (PIP) at Fermilab~\cite{pipii}, intended to drive neutrino experiments, will top \unit[1]{MW} with the ability to expand beyond that for future upgrades. To maintain an acceptable beam loss of \unit[1]{W/m}, fractional losses must be kept very low, with PIP-II requiring losses beneath $0.3\%$ and future designs requiring many times less.
+
+As beam power increases, its stability and lifetime may be compromised by coherent collective effects due to direct space charge -- the canonical example of this is beam halo~\cite{oconnell_etal:93, gluckstern:94, jameson:94, bruhwiler:95}. Other effects that can lead to beam loss in storage rings include dipole wake instabilities~\cite{courant_sessler:66, ferlinghi_pellegrini_touschek:66} where the growth rate is proportional to the beam current; the transverse microwave instability~\cite{talman:82} which has a threshold intensity; and the head-tail instability~\cite{pellegrini:69} which does not.
+
+Each of these instabilities arise in part due to strong linear focusing driving betatron resonances at a single frequency. Head oscillations at this frequency resonantly drive the tail of the bunch in wake field driven instabilities, while  transverse envelope oscillations at twice the betatron frequency in the presence of space charge produce beam halo. Introducing tune spread with amplitude can suppress these resonant interactions. If there is a transverse tune spread $\Delta Q$, any transverse oscillations will decohere in a time $\tau \sim \Delta Q^{-1}$. For decoherence times smaller than the growth rates of the instabilities, the driving terms will damp before any beam instability can grow.
+
+One proposed tool to mitigate these coherent instabilities is the nonlinear integrable optics~\cite{danilovNagaitsev:2010, nagValDan:2010}, which introduce large transverse tune spreads while still maintaining bounded, regular orbits. The principle is to construct an accelerator lattice which leads to bounded, regular motion in the transverse plane for on-momentum particles with large tune spreads. The large tune spread damps any oscillations which would normally drive coherent space charge instabilities~\cite{webb:12}. The Integrable Optics Test Accelerator (IOTA) is being commissioned at Fermi National Laboratory for study of the concept of nonlinear integrable optics~\cite{IOTA_techreport}. The use of a special nonlinear magnetic element introduces large tune spread with amplitude while constraining the idealized dynamics by two integrals of motion. However, integrability is susceptible to perturbations in the presence of space-charge, including tune-shift and transverse beam mismatch.
+
+We present simulations of the IOTA ring demonstrating the viability of the nonlinear integrable optics in the presence of space charge. We first illustrate the proper procedure for creating a matched beam for the nonlinear system. We then present a lattice design scheme that corrects for perturbations arising from space-charge driven tune shift that would otherwise disrupt integrability. Lastly, we show rapid nonlinear decoherence with the appropriate choice of nonlinear magnetic field strength and beam emittance, and compare this behavior to the equivalent case with octupole inserts. These simulation results confirm mathematical models... 
+
+%Single particle dynamics have been discussed in previous work on this topic, but 
+
+%All of these instabilities arise because a linear strong focusing ring has a single betatron frequency. For the wake field driven instabilities, a transverse offset will cause the head of the bunch of oscillate at the betatron frequency and resonantly drive the tail of the bunch. For space charge driven beam halo, mismatch causes the transverse beam envelope to oscillate at twice the betatron frequency, setting up a parametric resonance. In all cases, introducing a transverse tune spread with amplitude will prevent the resonant interaction. If there is a transverse tune spread $\Delta Q$, any transverse oscillations will decohere in a time $\tau \sim \Delta Q^{-1}$. For decoherence times smaller than the growth rates of the instabilities, the driving terms will damp before any beam instability can grow.
+
+%Conventionally, octupoles are used to introduce tune spread, but this can introduce nonlinear resonances and limit the single particle dynamic aperture. One proposed tool to mitigate these coherent instabilities is the nonlinear integrable optics~\cite{danilovNagaitsev:2010, nagValDan:2010}, which introduce large transverse tune spreads while still maintaining bounded, regular orbits. The principle  is to construct an accelerator lattice which leads to bounded, regular motion in the transverse plane for on-momentum particles with large tune spreads. The large tune spread decoheres any oscillations which would normally drive coherent space charge instabilities~\cite{webb:12}. Much of the existing literature on these lattices concerns transverse dynamics; in this paper we consider off-momentum effects.
+
+%We address the presence of chromaticity and dispersion using a transfer map formalism. We obtain general results on how these effects break the integrability of the lattice, as well as how we may restore integrability, at least to leading order. We conclude from our studies that having equal vertical and horizontal chromaticities and having no dispersion inside the drifts for the nonlinear elements restores the integrability for a coasting beam. We also find that the standard chromaticity correction schemes will also work for these lattices. Because we need only make the chromaticities equal, rather than make them vanish or close to vanishing to control tune spread, we are free to select a family of correcting sextupoles, octupoles, \emph{etc.} which has the least effect on the dynamic aperture. We illustrate this advantage in simulations of the Integrable Optics Test Accelerator ring, which has imperfectly cancelled sextupoles for adjusting the chromaticity.
+
+
+
 \subsection{Nonlinear Integrable Optics for Single Particles}
 \subsection{Impact of Space Charge}
 
