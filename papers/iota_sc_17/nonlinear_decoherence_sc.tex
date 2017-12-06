@@ -192,6 +192,20 @@ slices with the second order drift-kick scheme is sufficient to provide converge
 simulations with the inclusion of space charge we use 60 slices to ensure good 
 convergence.
 
+\subsection{Adaptive matching for space charge compensation}
+
+Integrability is crucially dependent upon the $\emph{n} \pi$ phase advance condition between nonlinear segments. We derived a lattice adjustment procedure to retain this condition across varying beam distributions and currents. First, a new working point for the linear lattice must be constructed to pre-empt the space charge tune shift, $\Delta Q$. Simulations performed with sixdsimulation were used to adjust quadrupole strengths in order to offset the phase advance between the exit and entrance by the desired amount for a range of $\Delta Q$ values~\cite{Romanov_2016}.
+
+With the linear lattice adjusted, we then sought a beam current that provided the appropriate tune depression for the full nonlinear lattice. Because the nonlinear potential is asymmetrical, the tune shift varies in each plane as a function of the nonlinear strength $t$, and thus requires a nontrivial adjustment to the beam current for each configuration. To determine the operating current for a lattice, a single turn was simulated in Synergia using its explicitly linear space charge solver. Particle coordinates were sampled at the exit and entrance of the nonlinear element. Small amplitude particles were chosen such that an accurate linear normal form could be computed. A linear phase unwrap algorithm was then applied to the particles normalized coordinates and a mean phase advance in each plane was computed for the input beam current. The resulting distribution of phase advances in both planes is illustrated in Fig.~\ref{fig:phase_adjust}. The optimum current is indicated by the value for which $\phi_x$ and $\phi_y$ are equally close to zero.
+
+\begin{figure}
+	\includegraphics[width=\columnwidth]{adjusted_t0pt3phase.pdf}%
+	\caption{\label{fig:phase_adjust} The operating current for an adjusted IOTA lattice is found by minimizing the deviation in the phase advance in each plane from zero.}
+\end{figure}
+
+This procedure was repeated to construct optimized lattice and beam configurations for each combination of tune-depression and $t$ value considered.
+
+
 % Put \label in argument of \section for cross-referencing
 %\section{\label{}}
 \subsection{Simulation Results}

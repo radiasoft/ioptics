@@ -25,45 +25,45 @@ Control: page (0) single
 Control: year (1) truncated
 Control: production of eprint (0) enabled
 Warning--empty year in synergia
-You've used 18 entries,
+You've used 19 entries,
             5847 wiz_defined-function locations,
-            1703 strings with 17742 characters,
-and the built_in function-call counts, 16927 in all, are:
-= -- 977
-> -- 476
-< -- 136
-+ -- 155
-- -- 135
-* -- 2640
-:= -- 1610
-add.period$ -- 18
-call.type$ -- 18
-change.case$ -- 69
-chr.to.int$ -- 26
-cite$ -- 21
-duplicate$ -- 1660
-empty$ -- 1213
-format.name$ -- 273
-if$ -- 3306
+            1710 strings with 17949 characters,
+and the built_in function-call counts, 18039 in all, are:
+= -- 1028
+> -- 516
+< -- 143
++ -- 167
+- -- 145
+* -- 2832
+:= -- 1711
+add.period$ -- 19
+call.type$ -- 19
+change.case$ -- 73
+chr.to.int$ -- 27
+cite$ -- 22
+duplicate$ -- 1770
+empty$ -- 1300
+format.name$ -- 296
+if$ -- 3524
 int.to.chr$ -- 1
-int.to.str$ -- 25
-missing$ -- 217
-newline$ -- 101
-num.names$ -- 45
-pop$ -- 694
+int.to.str$ -- 26
+missing$ -- 232
+newline$ -- 104
+num.names$ -- 48
+pop$ -- 740
 preamble$ -- 1
-purify$ -- 79
+purify$ -- 84
 quote$ -- 0
-skip$ -- 589
+skip$ -- 620
 stack$ -- 0
-substring$ -- 337
-swap$ -- 1561
-text.length$ -- 62
+substring$ -- 350
+swap$ -- 1667
+text.length$ -- 67
 text.prefix$ -- 0
 top$ -- 10
-type$ -- 246
+type$ -- 262
 warning$ -- 2
-while$ -- 48
+while$ -- 50
 width$ -- 0
-write$ -- 176
+write$ -- 183
 (There were 3 warnings)
