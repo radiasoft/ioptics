@@ -20,11 +20,16 @@
 \documentclass[aps,prstab,twocolumn, groupedaddress]{revtex4-1}
 
 \usepackage{siunitx}
+\usepackage{placeins}
+\usepackage{amsmath}
 \usepackage{liecolon}
 \usepackage{nicefrac}
 \usepackage{units}
 \usepackage{color}
 \usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+
 
 \graphicspath{{./figures/}}
 
@@ -45,7 +50,7 @@
 %\preprint{}
 
 %Title of paper
-\title{Nonlinear Decoherence in the Presence of Space Charge}
+\title{Analysis of Nonlinear Decoherence in the IOTA Ring}
 
 % repeat the \author .. \affiliation  etc. as needed
 % \email, \thanks, \homepage, \altaffiliation all apply to the current
@@ -57,12 +62,12 @@
 % \affiliation command. The \affiliation command should follow the
 % other information
 % \affiliation can be followed by \email, \homepage, \thanks as well.
-\author{}
+\author{C. C. Hall}
 %\email[]{Your e-mail address}
 %\homepage[]{Your web page}
-%\thanks{}
+\thanks{}
 %\altaffiliation{}
-\affiliation{}
+\affiliation{RadiaSoft LLC}
 
 %Collaboration name if desired (requires use of superscriptaddress
 %option in \documentclass). \noaffiliation is required (may also be
@@ -74,7 +79,16 @@
 \date{\today}
 
 \begin{abstract}
-% insert abstract here
+The Integrable Optics Test Accelerator (IOTA) has been built at Fermi National Laboratory 
+for study of nonlinear integrable optics. The use of nonlinear integrable optics shows 
+great promise in providing control of deleterious coherent effects through use of a special 
+nonlinear magnetic element that will provide large tune spread with amplitude while still 
+constraining the idealized dynamics by two invariants. In this work we examine what 
+happens when the idealized design principles required by this nonlinear element for the 
+rest of the lattice are broken due to space charge. It is observed that while the two 
+invariants are no longer maintained there is still suppression of coherent effects. The 
+scaling of the nonlinear decoherence is examined through simulation studies in the case 
+of space charge and an analytic model is provided for the case of vanishing space charge.
 \end{abstract}-
 
 % insert suggested PACS numbers in braces on next line
@@ -123,8 +137,17 @@ Each of these instabilities arise in part due to strong linear focusing driving 
 
 One proposed tool to mitigate these coherent instabilities is the nonlinear integrable optics~\cite{danilovNagaitsev:2010, nagValDan:2010}, which introduce large transverse tune spreads while still maintaining bounded, regular orbits. The principle is to construct an accelerator lattice which leads to bounded, regular motion in the transverse plane for on-momentum particles with large tune spreads. The large tune spread damps any oscillations which would normally drive coherent space charge instabilities~\cite{webb:12}. The Integrable Optics Test Accelerator (IOTA) is being commissioned at Fermi National Laboratory for study of the concept of nonlinear integrable optics~\cite{IOTA_techreport}. The use of a special nonlinear magnetic element introduces large tune spread with amplitude while constraining the idealized dynamics by two integrals of motion. However, integrability is susceptible to perturbations in the presence of space-charge, including tune-shift and transverse beam mismatch.
 
-We present simulations of the IOTA ring demonstrating the viability of the nonlinear integrable optics in the presence of space charge. We first illustrate the proper procedure for creating a matched beam for the nonlinear system. We then present a lattice design scheme that corrects for perturbations arising from space-charge driven tune shift that would otherwise disrupt integrability. Lastly, we show rapid nonlinear decoherence with the appropriate choice of nonlinear magnetic field strength and beam emittance, and compare this behavior to the equivalent case with octupole inserts. These simulation results confirm mathematical models... 
+We present simulations of the IOTA ring demonstrating the viability of the nonlinear 
+integrable optics in the presence of space charge. We first illustrate the proper procedure 
+for creating a matched beam for the nonlinear system. We then present a lattice design 
+scheme that corrects for perturbations arising from space-charge driven tune shift that 
+would otherwise disrupt integrability. The efficacy of this scheme is them demonstrated 
+by examining nonlinear decoherence, produced by the elliptic element, in the case of an 
+offset injected bunch. Finally, an analytic model is provided to examine some of the 
+scaling observed from simulations in the previous sections.
 
+%TODO: better tie together scaling from model to simulation results with sc
+%TODO: show compensated/uncompensated lattice
 %Single particle dynamics have been discussed in previous work on this topic, but 
 
 %All of these instabilities arise because a linear strong focusing ring has a single betatron frequency. For the wake field driven instabilities, a transverse offset will cause the head of the bunch of oscillate at the betatron frequency and resonantly drive the tail of the bunch. For space charge driven beam halo, mismatch causes the transverse beam envelope to oscillate at twice the betatron frequency, setting up a parametric resonance. In all cases, introducing a transverse tune spread with amplitude will prevent the resonant interaction. If there is a transverse tune spread $\Delta Q$, any transverse oscillations will decohere in a time $\tau \sim \Delta Q^{-1}$. For decoherence times smaller than the growth rates of the instabilities, the driving terms will damp before any beam instability can grow.
@@ -135,8 +158,8 @@ We present simulations of the IOTA ring demonstrating the viability of the nonli
 
 
 
-\subsection{Nonlinear Integrable Optics for Single Particles}
-\subsection{Impact of Space Charge}
+%\subsection{Nonlinear Integrable Optics for Single Particles}
+%\subsection{Impact of Space Charge}
 
 \section{Creating a Matched Bunch}
 For a periodic accelerator matching of the bunch to the lattice usually entails finding a 
@@ -159,6 +182,7 @@ value for the Hamiltonian
 		H = \frac{\hat{p}^2_x}{2} +  \frac{\hat{p}^2_y}{2} +
 		 \frac{\hat{x}^2}{2} + \frac{\hat{y}^2}{2} +
 		 tU(\hat{x}, \hat{y}).
+	\label{eq:hamiltonian}
 	\end{equation}
 
 So that all particles lie on a single hyper-ellipsoid in the transverse phase space. While the 
@@ -166,7 +190,34 @@ KV distribution is useful due to its linear space charge forces which means that
 particles experience a single tune depression
 %Give equation?
 it is also prone to producing numerical effects and has been found to not produce 
-long-term stable results in these efforts to simulate \textcolor{red}{non}
+long-term stable results in simulation.
+
+For this reason we use a waterbag distribution is used in these studies. We define a 
+waterbag to be
+
+\begin{equation} \label{eq:distribution}
+f(H) = 
+\left\{
+\begin{array}{lr}
+1 &  H_{max} - H > 0 \\
+0 &  H_{max} - H < 0
+\end{array}
+\right.,
+\end{equation} 
+where $H$, the Hamiltonian is defined in Eq. \ref{eq:hamiltonian} and $H_{max}$ is a 
+chosen cutoff value. The bunch is populated by generating trial particles inside the real 
+space coordinates bounds of the chosen equipotential cutoff $H_{max}$, if the particle 
+has $ tU \leq \varepsilon$, where $\varepsilon$ is the usual emittance, then the 
+momentum coordinates of the particle are assigned based on the quantity $\varepsilon - 
+tU$. An example of the resulting distribution is shown in Fig. \ref{fig:wbdistr}.
+
+\begin{figure}
+	\includegraphics[width=\columnwidth]{distribution.pdf}%
+	\caption{\label{fig:wbdistr} A waterbag distribution is shown in normalized coordinates, 
+	superimposed over the elliptic potential. Equipotential lines are shown in grey with the 
+	maximum equipotential for the bunch outlined in red and shifted equipotential marked 
+	in green.}
+\end{figure}
 
 \section{Simulations of IOTA}
 \subsection{Simulation Descriptions}
@@ -187,14 +238,21 @@ strength parameter $t$ and geometric parameter $c$. For invariance to be maintai
 these parameters must scale with the $\beta$-function as $\beta^{-1}$ and $\sqrt{\beta}$ 
 respectively along the nonlinear magnet. For construction of the physical magnet smooth 
 scaling is not realistically achievable due to engineering constraints and the magnet is 
-broken into 20 thin slices \cite{elliptic_magnet}. In simulation, it has been seen that 20 
+broken into 20 thin slices \cite{o2013measurement}. In simulation, it has been seen that 
+20 
 slices with the second order drift-kick scheme is sufficient to provide convergence. In our 
 simulations with the inclusion of space charge we use 60 slices to ensure good 
 convergence.
 
 \subsection{Adaptive matching for space charge compensation}
 
-Integrability is crucially dependent upon the $\emph{n} \pi$ phase advance condition between nonlinear segments. We derived a lattice adjustment procedure to retain this condition across varying beam distributions and currents. First, a new working point for the linear lattice must be constructed to pre-empt the space charge tune shift, $\Delta Q$. Simulations performed with sixdsimulation were used to adjust quadrupole strengths in order to offset the phase advance between the exit and entrance by the desired amount for a range of $\Delta Q$ values~\cite{Romanov_2016}.
+Integrability is crucially dependent upon the $\emph{n} \pi$ phase advance condition 
+between nonlinear segments. We derived a lattice adjustment procedure to retain this 
+condition across varying beam distributions and currents. First, a new working point for 
+the linear lattice must be constructed to preempt the space charge tune shift, $\Delta Q$. 
+Simulations performed with sixdsimulation were used to adjust quadrupole strengths in 
+order to offset the phase advance between the exit and entrance by the desired amount 
+for a range of $\Delta Q$ values~\cite{Romanov_2016}.
 
 With the linear lattice adjusted, we then sought a beam current that provided the appropriate tune depression for the full nonlinear lattice. Because the nonlinear potential is asymmetrical, the tune shift varies in each plane as a function of the nonlinear strength $t$, and thus requires a nontrivial adjustment to the beam current for each configuration. To determine the operating current for a lattice, a single turn was simulated in Synergia using its explicitly linear space charge solver. Particle coordinates were sampled at the exit and entrance of the nonlinear element. Small amplitude particles were chosen such that an accurate linear normal form could be computed. A linear phase unwrap algorithm was then applied to the particles normalized coordinates and a mean phase advance in each plane was computed for the input beam current. The resulting distribution of phase advances in both planes is illustrated in Fig.~\ref{fig:phase_adjust}. The optimum current is indicated by the value for which $\phi_x$ and $\phi_y$ are equally close to zero.
 
@@ -212,11 +270,16 @@ This procedure was repeated to construct optimized lattice and beam configuratio
 To examine the operation of the nonlinear element we start the simulation with a bunch 
 that has been matched into the elliptic potential as previous described, but after the 
 matching procedure the bunch centroid is displaced from zero in x by \SI{+100}{\mu m}. A 
-comparison of bunch centroid motion with and without the noninear element is shown in 
+comparison of bunch centroid motion with and without the nonlinear element is shown in 
 Fig. \ref{fig:nll_on-off} With a purely linear lattice this displaced bunch exhibits coherent 
 oscillations of the centroid around zero indefinitely. With the nonlinear element turned on 
 these oscillations  rapidly damp due to the tune spread created by the nonlinear magnet. 
-
+%The tune spread induced for the zero current case is shown in Fig. 
+%%%\ref{fig:zc_tune_spread}. 
+Because the multipole expansion of the elliptic potential has a 
+quadrupole term in the lowest order there is a splitting of the horizontal and vertical 
+tunes, as well as the spread from the higher-order terms. 
+%TODO: Remake simulation with ZC and t=0, currently only have SC case
 \begin{figure}
 	\includegraphics[width=\columnwidth]{t_on-off_8um.pdf}%
 	\caption{\label{fig:nll_on-off} Centroid ($C_x$) motion for a matched bunch displaced 
@@ -224,12 +287,6 @@ these oscillations  rapidly damp due to the tune spread created by the nonlinear
 	and with nonlinear element on in orange. Space charge is not included in the 
 	simulation.}
 \end{figure}
-
-The tune spread induced for the zero current case is shown in Fig. 
-\ref{fig:zc_tune_spread}. Because the multipole expansion of the elliptic potential has a 
-quadrupole term in the lowest order there is a splitting of the horizontal and vertical 
-tunes, as well as the spread from the higher-order terms. 
-%TODO: Remake simulation with ZC and t=0, currently only have SC case
 
 \subsubsection{Nonlinear Decoherence with Space Charge}
 
@@ -244,6 +301,7 @@ exit to the entrance of the nonlinear element within one standard deviation of z
 for various emittances are shown in Table. \ref{table:sc_params}.
 
 \begin{table}
+	% TODO: Add in missing emittance values
 	\caption{\label{table:sc_params} Characteristics of the bunch and lattice for 
 	simulations.}
 	\begin{ruledtabular}
@@ -266,7 +324,7 @@ for various emittances are shown in Table. \ref{table:sc_params}.
 		\hline
 		\\[-1em]
 		t & 0.2/0.4 & - \\
-		c & 0.1 & $m^{1/2}$ \\
+		c & 0.01 & $m^{1/2}$ \\
 		$\psi_{nll}$& 0.3 & $2\pi$ \\
 		\hline
 	\end{tabular}
@@ -288,7 +346,290 @@ T-insert is broken for particles that do not maintain the design tune.
 		simulation in orange. Space charge is included for the simulation shown in blue.}
 \end{figure}
 
-% Create the reference section using BibTeX:
+\section{Emittance Scaling of Nonlinear Decoherence}
+
+The presence of even a relatively modest amount of space charge, as measured from the 
+average tune depression created can have significant impact on the behavior of the 
+nonlinear decoherence. In this section we will examine the behavior of nonlinear 
+decoherence over a longer time scale and with varying emittance of the waterbag 
+distribution. The parameters of Table. \ref{table:sc_params} remain relevant in this section 
+for the appropriate emittance value. 
+
+Using the matching procedure described in Section. II a matched bunch is created and the 
+space charge tune depression is adjusted to match the nominal value of $dQ_{SC} = 
+0.03$ as closely as possible. The means that each different emittance value will have a 
+different average current. These bunches are started at the center of the nonlinear 
+element in IOTA, each with an offset of $\Delta \sigma_x = 100 \mu m$. The simulations 
+are run for \SI{10000}{turns} and the bunch phase space recorded at center of the 
+nonlinear element ever four turns. 
+
+The results for each simulation from \SIrange{4}{16}{\mu m} is shown in Fig. 
+\ref{fig:10kcentroids}. It is apparent that the damping rate of the centroid motion from the 
+nonlinear decoherence is strong dependent on bunch emittance. The scale ranges from 
+\SI{>e5}{turns} for small emittance down to \SI{<200}{turns} for the upper emittance 
+range. There is also a change in behavior of the centroid motion exhibited from the first 
+few turns, where there is a very rapid change from the initial offset, to an intermediate 
+regime that may be described, approximately, as an exponential decay of the centroid 
+versus turn envelope. Finally, there is some floor reached for the centroid oscillations, 
+independent of the emittance.
+
+% TODO: Customize placement of legend into multiple columns
+\begin{figure}
+	\includegraphics[width=\columnwidth]{centroids_to_10k.pdf}%
+	\caption{Centroid ($C_x$) versus turn number for bunches of varying emittance 
+	propagated in IOTA for \SI{10000}{turns}. The inset shows the first \SI{10000}{turns} 
+	magnified.}
+	\label{fig:10kcentroids} 
+\end{figure}
+
+The corresponding invariants are shown in Fig. \ref{fig:10kinvariants}. The first invariant, 
+$H$, corresponds to the Hamiltonian, as given in Eq. \ref{eq:hamiltonian} with the elliptic 
+potential $U$, and is directly related to the emittance. The second invariant $I$ is 
+described in \cite{danilovNagaitsev:2010}. There is a long-term linear growth in invariants 
+for all emittances. However, it is clear that while the invariants are not exactly preserved 
+there is still significant preservation of the beam against coherent effects, as 
+demonstrated by the centroid oscillation damping.
+
+\begin{figure}[htb]
+	\centering
+	\begin{subfigure}[b]{\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{first_inv_mean.pdf}%
+		\hfill
+		\includegraphics[width=\columnwidth]{second_inv_mean.pdf}
+	\end{subfigure}
+	\caption{First and second invariants (on top and bottom figures respectively) versus 
+	turn number.}
+	\label{fig:10kinvariants}
+\end{figure}
+
+To estimate the the dependence of nonlinear decoherence on emittance we can use an 
+exponential decay $C(T) = C_0 e^{-T/\tau}$ to fit to the centroid oscillation damping. This 
+fit begins on turn 5, to allow for the initial, more rapid, decay period and is based on the 
+normalized absolute value of the centroid position by turn. The resulting fit with each 
+centroid dataset is show in Fig. \ref{fig:decayfits}. For fits of larger emittances the fit 
+naturally tends to follow the early falloff due to how heavily it is weighted compared to the 
+very-long, low-amplitude tails.
+
+\begin{figure*}
+	\includegraphics[width=\textwidth]{decay_rate_fits.pdf}%
+	\caption{Fit of exponential decay  for $\left| C_x \right| / C_x^{(0)} $ shown in black for 
+	each emittance in their respective color each on a semi-log scale. }
+	\label{fig:decayfits} 
+\end{figure*}
+
+The resulting decay rates, $\tau$, are summarized in Fig. \ref{fig:decayemit}. While a 
+roughly exponential dependence on emittance is shown up until \SI{12}{mm-mrad} the 
+trend falls off for the higher emittances. This may be a result of the extremely rapid 
+damping on the overall time scale of the entire simulation.
+
+\begin{figure}
+	\includegraphics[width=\columnwidth]{decay_time.pdf}%
+	\caption{Decay rate $\tau$ versus emittance shown on a semi-log scale. Color coded by 
+	emittance.}
+	\label{fig:decayemit} 
+\end{figure}
+
+\section{1D Analytic Decoherence Model}
+We now move to describing a basic model for the centroid motion of bunch undergoing 
+nonlinear decoherence. To begin we assume that the bunch starts out with some 
+displacement $\Delta x$ along one transverse axis at turn $N=0$. We will then find a 
+representation of  $\hat{x}(N)$ the normalized centroid position $\left\langle x 
+\right\rangle 
+/ \sigma_x$ as a function of turn number. 
+
+The method for describing the centroid behavior of a gaussian distribution was originally 
+given by Meller et al. \cite{meller} and describe particle motion in the coordinates $ a = 
+\sqrt{\beta_x \varepsilon_x} / \sigma_x$ and $\varphi$, for the amplitude and initial phase 
+of a 
+particle. This means that the actual particle displacement is then $x = \sigma_x a cos(2 \pi 
+\nu N + \varphi)$. 
+
+Because of the presence of the nonlinear element there will be amplitude-dependence in 
+the particle tune. may be characterized in terms of
+a unitless strength parameter $t$ and geometric scale factor $c$, with units of
+$m^\frac{1}{2}$, that describes the location of two singularities in the x-plane. The first
+few terms of the multipole expansion for the elliptic potential in normalized coordinates
+$\hat{x}, \hat{y} = x / \sqrt{\beta}, y / \sqrt{\beta}$ are given by %\cite{valishev:napac16}
+\begin{multline} \label{eq:expansion}
+U(\hat{x}, \hat{y}) = \frac{-t}{c^2} \, Im\left\lbrace (\hat{x}+i\hat{y})^2 +
+\frac{2}{3c^2}(\hat{x} + i\hat{y})^4 + \right. \\
+\left. \frac{8}{15c^4}(\hat{x}+i\hat{y})^6 + ... \right\rbrace.
+\end{multline}
+Note: this expansion is only valid in the region $\sqrt{\hat{x}^2 +\hat{y}^2} < c$. Because 
+of the form of the potential we expect to see just the even 
+terms in amplitude effecting the tune.
+
+\subsection{Nonlinear Decoherence and the Centroid}
+
+Due to the octupole and higher terms in the potential the tune $\nu$ will have an 
+amplitude dependence of the form
+
+\begin{equation} \label{eq:tune}
+\nu = \nu_0 - \sum_{i=1} \mu_i a^{2i},
+\end{equation}
+
+where $\nu_0$ is the unperturbed tune and $\mu_i$ are coefficients determined by the 
+octupole, duodecapole, etc. multipole components in the nonlinear element. The 
+calculation of these coefficients becomes cumbersome beyond the lowest order. This is a 
+major obstacle to the use of the formulation developed here. This issue will be discussed 
+further on.
+
+This amplitude-dependent tune will result in particles having a phase shift each turn of
+\begin{equation}
+\Delta \varphi(a, N) = -2 \pi N \sum_{i=1} \mu_i a^{2i},
+\end{equation}
+when compared to the unperturbed phase advance $\nu_0$. From this the centroid 
+motion for a distribution $\rho(a, \varphi)$ as a function of turn number in a lattice with 
+some nonlinearities will be
+
+\begin{equation} \label{eq:centroid}
+\hat{x}(N) = \int_{0}^{\infty}da \int_{0}^{2\pi}d\varphi \, a cos(\varphi) \rho(a,
+\varphi -
+2\pi N \nu).
+\end{equation}
+
+\subsection{Calculation for a Waterbag Distribution}
+
+Because all our simulation data we will compare to uses a waterbag distribution we are 
+first interested in the calculation of Eq. \ref{eq:centroid} for such a distribution. here we 
+define a 'waterbag' according to the definition of Reiser, that is the bunch has a uniform 
+distribution of particle amplitudes from 0 to some cutoff, that is
+
+\begin{equation} \label{eq:waterbag}
+\rho(a, \varphi) =
+\left\{
+\begin{array}{lr}
+1 &  a \leq 1 \\
+0 &  a > 1
+\end{array}
+\right.
+\end{equation}. 
+
+We then assume that the distribution starts out with a centroid offset, in our normalized 
+coordinates is, $Z = \Delta x / \sigma_x$. This offset waterbag then takes form
+
+\begin{equation} \label{eq:offset_wb}
+\rho(a, \varphi) =
+\left\{
+\begin{array}{lr}
+\frac{1 + Z^2 - 2Zcos(\varphi)}{\pi} &  0 < a \leq 1 \\
+0 &  a > 1 \, \,o \, \,r a < 0
+\end{array}
+\right.
+\end{equation}
+
+Inserting Eq. \ref{eq:offset_wb} in Eq. \ref{eq:centroid} we can make a convenient change 
+of variable $u=a^2$ and perform the integration in $\varphi$, resulting in
+%NOTE: My notes do not agree on the sign of these two terms so I am following the code 
+%in decoherence.py, since it's been validated against simulations
+
+\begin{multline}
+\hat{x}(N) = \pi Z \int_{0}^{1} du \,\, cos(2 \pi \nu_0 N)cos(\Delta \varphi(u, N)) +\\  sin(2 
+\pi 
+\nu_0 N) sin(\Delta \varphi(u, N))
+\end{multline}
+
+A second change of variable $\hat{u} = 2 \pi N u$ is then made to assist in numerical 
+integration down the road. The general result for the centroid motion is then
+
+\begin{multline} \label{eq:general_centroid}
+\hat{x}(N) = \frac{Z}{2 N} \int_{0}^{2\pi N} d\hat{u} \,\, cos(2 \pi \nu_0 N)cos(\Delta 
+\varphi(u, 
+N)) - \\
+sin(2 \varphi 
+\nu_0 N) sin(\Delta \varphi(u, N))
+\end{multline}
+
+After this transformation the phase slip $\Delta \varphi$ has now become
+
+\begin{equation} \label{eq:phase_slip_2} 
+\Delta \varphi(\hat{u}, N) = \sum_{i=1} \frac{\mu_i \hat{u}^{i}}{(2 \pi N)^{i - 1}}.
+\end{equation}
+
+%TODO: may want to rewrite this section
+\subsection{Comparison to Simulations}
+For the case where only the quadratic amplitude term is used the expected coupling 
+strength may be estimated from \cite{talman:86}
+\begin{equation} \label{eq:octupole_coeff}
+\mu_1 = \frac{3 \varepsilon}{16} \sum_{i=1}^n k_{3, i}\beta_{x, i}^2,
+\end{equation}
+where the octupole strength of a segmented representation of the nonlinear element of 
+length $l$ is
+
+\begin{equation}
+k_{3,i} = \frac{16}{n} \frac{t \ell}{c^2\beta^3_{x,i} }.
+\end{equation}
+In the ideal case the field in the magnet should continuously and smoothly vary along the 
+length of the element. In the actual nonlinear element the the magnet is composed of 20 
+segments to approximate this variation. In our simulation the magnet is split into 60 
+segments for slightly better convergence. The  matched betatron function calculated for 
+the element and the resulting variation in $k_3$ are shown in Fig.~\ref{fig:envelope_nl}.
+
+%TODO: Make new version with a legend and switch twinx
+
+\begin{figure}
+	\includegraphics[width=0.85\columnwidth]{envelope.pdf}
+	\caption{The betatron amplitude $\beta_x$ in blue and the octupole strength $k_3$ in 
+		yellow for the nonlinear lens.}
+	\label{fig:envelope_nl}
+\end{figure}
+
+For comparison to this model bunches with several different emittances were again 
+simulated in 
+IOTA using Synergia. In each cases the bunch was started with an 
+offset of 100~$\mu$m in the x centroid. The nonlinear element used the same parameters 
+from Table \ref{table:sc_params}.  It should be noted that the model of the nonlinear 
+element with the full elliptic potential (that is, no truncated multipole expansion) was used 
+in the simulations, as compared to the analytic model with only an octupole term. 
+
+The results of the simulations are compared against the exact analytic model, calculated 
+only using the octupole coefficients from Eq. \ref{eq:octupole_coeff}, is shown in Fig. 
+\ref{fig:analyticsim}. The truncated analytic model appears to give good agreement with 
+the 
+envelope of the centroid oscillations, especially for smaller emittances where the 
+decoherence is weaker. For very rapid decay of oscillation amplitude in the 
+16~mm-mrad case the analytic result seems to over-estimate the decoherence strength. 
+The disagreement is likely due to the area of validity of Eq. \ref{eq:expansion} and to the 
+increasing importance of higher order terms at larger amplitudes.
+
+\begin{figure*}
+	\vspace*{-.75\baselineskip}
+	\centering
+	\includegraphics*[width=\textwidth]{analytic_simulation_data.pdf}
+	\caption{Comparison of the analytic decoherence model to Synergia simulations of 
+		IOTA. The comparison is performed for bunches with four different emittances. From 
+		left to right and top to bottom $\varepsilon= 4, 8, 12, 16$ mm-mrad are shown. }
+	\label{fig:analyticsim}
+\end{figure*}
+
+
+%TODO: Really need to better discuss the implication of offset to beamsize ratio 
+%TODO (emittance)
+\section{Conclusion}
+A procedure for maintaining  partial integrability for an elliptical potential, nonlinear 
+element installed in the IOTA ring has been demonstrated. This will allow for suppression 
+of collective instabilities even in the presence of space charge. The verification of this 
+process and a demonstration of nonlinear decoherence in the presence of space charge 
+has also been shown in simulations of IOTA. From this it can be seen that the nonlinear 
+decoherence strength provided by the nonlinear element depends strongly on beam 
+emittance. This dependence has been empirically qualified from simulation data. A simple 
+analytic model also is has been shown that provides some insight into the emittance 
+dependence, though it is limited to the cases where space charge may be neglected.
+
+It is expected that future work will look to expand this analytic model to better capture 
+inclusion of space charge in producing tune spread in the bunch that must be accounted 
+for. Higher order terms could also be included, past the octupole. The current analytic 
+model may also be appropriate to apply to planned electron experiments in IOTA and 
+could provide insight into nonlinear decoherence behavior in this case where space 
+charge is negligible. 
+
+\begin{acknowledgments}
+This work has been supported by the U.S. Department of Energy Office of Science, Office 
+of High Energy Physics under Award No. DE-SC00111340
+\end{acknowledgments}
+\FloatBarrier
+
 \bibliography{hall}
 
 \end{document}
