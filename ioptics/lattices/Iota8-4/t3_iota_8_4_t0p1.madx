@@ -109,7 +109,16 @@ mn03: marker,apertype=ellipse,aperture:={ 0.0042600509, 0.00568006786};
 mn02: marker,apertype=ellipse,aperture:={ 0.0040521202, 0.00540282702};
 mn01: marker,apertype=ellipse,aperture:={ 0.0039446881, 0.00525958413};
 
-
+n.1: nllens,knll:= 3.949259235e-07,cnll:= 0.01509605375;
+n.2: nllens,knll:= 4.087426842e-07,cnll:= 0.0148387138;
+n.3: nllens,knll:= 4.218619156e-07,cnll:= 0.01460616137;
+n.4: nllens,knll:= 4.340520434e-07,cnll:= 0.01439959748;
+n.5: nllens,knll:= 4.450756832e-07,cnll:= 0.0142201547;
+n.6: nllens,knll:= 4.546990267e-07,cnll:= 0.01406887083;
+n.7: nllens,knll:= 4.627026023e-07,cnll:= 0.01394666225;
+n.8: nllens,knll:= 4.688926603e-07,cnll:= 0.0138542984;
+n.9: nllens,knll:= 4.731122059e-07,cnll:= 0.01379237887;
+n.10: nllens,knll:= 4.75250586e-07,cnll:= 0.01376131462;
 ior: marker;
 n.11: nllens,knll:= 4.75250586e-07,cnll:= 0.01376131462;
 n.12: nllens,knll:= 4.731122059e-07,cnll:= 0.01379237887;
