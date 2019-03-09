@@ -122,7 +122,6 @@ of space charge and an analytic model is provided for the case of vanishing spac
 % 		Emittance growth points to bad things happening eventually in octupole case
 % 		Show that tune spread can be pushed higher for elliptic element than octupole
 
-%TODO: Note apertures
 \section{Introduction}
 
  %The Integrable Optics Test Accelerator (IOTA) is a small ring, currently under construction at Fermilab, which will explore advanced concepts in beam dynamics with low-energy proton beams with high space charge tune depression. Through use of a special nonlinear magnet insertion, large tune spread with amplitude can be achieved while preserving two integrals of motion for the single particle behavior. The stability of these invariants is particularly sensitive to collective effects such as space charge induced tune depression. 
@@ -131,11 +130,38 @@ of space charge and an analytic model is provided for the case of vanishing spac
 
 Modern hadron accelerators such as spallation sources and neutrino factories must reach higher beam intensities to meet increasingly challenging demands on performance. For example, the European Spallation Source plans for a proton beam with \unit[5]{MW} average power~\cite{ess_report}. The Proton Improvement Plan (PIP) at Fermilab~\cite{pipii}, intended to drive neutrino experiments, will top \unit[1]{MW} with the ability to expand beyond that for future upgrades. To maintain an acceptable beam loss of \unit[1]{W/m}, fractional losses must be kept very low, with PIP-II requiring losses beneath $0.3\%$ and future designs requiring many times less.
 
-As beam power increases, its stability and lifetime may be compromised by coherent collective effects due to direct space charge -- the canonical example of this is beam halo~\cite{oconnell_etal:93, gluckstern:94, jameson:94, bruhwiler:95}. Other effects that can lead to beam loss in storage rings include dipole wake instabilities~\cite{courant_sessler:66, ferlinghi_pellegrini_touschek:66} where the growth rate is proportional to the beam current; the transverse microwave instability~\cite{talman:82} which has a threshold intensity; and the head-tail instability~\cite{pellegrini:69} which does not.
+As beam power increases, its stability and lifetime may be compromised by coherent, 
+collective effects due to direct space charge -- the canonical example of this is beam 
+halo~\cite{oconnell_etal:93, gluckstern:94, jameson:94, bruhwiler:95}. Other effects that 
+can lead to beam loss in storage rings include dipole wake 
+instabilities~\cite{courant_sessler:66, ferlinghi_pellegrini_touschek:66} where the growth 
+rate is proportional to the beam current; the transverse microwave 
+instability~\cite{talman:82} which has a threshold intensity; and the head-tail 
+instability~\cite{pellegrini:69} which does not.
 
-Each of these instabilities arise in part due to strong linear focusing driving betatron resonances at a single frequency. Head oscillations at this frequency resonantly drive the tail of the bunch in wake field driven instabilities, while  transverse envelope oscillations at twice the betatron frequency in the presence of space charge produce beam halo. Introducing tune spread with amplitude can suppress these resonant interactions. If there is a transverse tune spread $\Delta Q$, any transverse oscillations will decohere in a time $\tau \sim \Delta Q^{-1}$. For decoherence times smaller than the growth rates of the instabilities, the driving terms will damp before any beam instability can grow.
+Each of these instabilities arise in part due to strong linear focusing driving betatron 
+resonances at a single frequency. Head oscillations at this frequency resonantly drive the 
+tail of the bunch in wake field driven instabilities, while  transverse envelope oscillations at 
+twice the betatron frequency in the presence of space charge produce beam halo. 
+Introducing a tune spread with amplitude dependence into the distribution can suppress 
+these resonant interactions. If there is a transverse tune spread $\Delta Q$, any 
+transverse oscillations will decohere in a time $\tau \sim \Delta Q^{-1}$. For decoherence 
+times smaller than the growth rates of the instabilities, the driving terms will damp before 
+any beam instability can grow.
 
-One proposed tool to mitigate these coherent instabilities is the nonlinear integrable optics~\cite{danilovNagaitsev:2010, nagValDan:2010}, which introduce large transverse tune spreads while still maintaining bounded, regular orbits. The principle is to construct an accelerator lattice which leads to bounded, regular motion in the transverse plane for on-momentum particles with large tune spreads. The large tune spread damps any oscillations which would normally drive coherent space charge instabilities~\cite{webb:12}. The Integrable Optics Test Accelerator (IOTA) is being commissioned at Fermi National Laboratory for study of the concept of nonlinear integrable optics~\cite{IOTA_techreport}. The use of a special nonlinear magnetic element introduces large tune spread with amplitude while constraining the idealized dynamics by two integrals of motion. However, integrability is susceptible to perturbations in the presence of space-charge, including tune-shift and transverse beam mismatch.
+One promising tool to mitigate these coherent instabilities is nonlinear integrable 
+optics~\cite{danilovNagaitsev:2010, nagValDan:2010}, which introduce large transverse 
+tune spreads while still maintaining bounded, regular orbits. The principle is to construct 
+an accelerator lattice which leads to bounded, regular motion in the transverse plane for 
+on-momentum particles with large tune spreads. The large tune spread damps any 
+oscillations which would normally drive coherent space charge instabilities~\cite{webb:12}. 
+Due to maintaining integrability the dynamic aperture should not be compromised. The 
+Integrable Optics Test Accelerator (IOTA) is being commissioned at Fermi National 
+Laboratory for study of the concept of nonlinear integrable optics~\cite{IOTA_techreport}. 
+The use of a special nonlinear magnetic element introduces large tune spread with 
+amplitude while constraining the idealized dynamics by two integrals of motion. However, 
+the integrability is susceptible to perturbations in the presence of space-charge, including 
+tune-shift and transverse beam mismatch.
 
 We present simulations of the IOTA ring demonstrating the viability of the nonlinear 
 integrable optics in the presence of space charge. We first illustrate the proper procedure 
@@ -161,7 +187,7 @@ scaling observed from simulations in the previous sections.
 %\subsection{Nonlinear Integrable Optics for Single Particles}
 %\subsection{Impact of Space Charge}
 
-\section{Creating a Matched Bunch}
+\section{Creating a Matched Distribution}
 For a periodic accelerator matching of the bunch to the lattice usually entails finding a 
 periodically constant set of Twiss parameters. The statistical properties of the distribution 
 are then set equal to the Twiss parameters of the lattice. Thus matched such a bunch will 
@@ -175,7 +201,8 @@ potential that will be created based on the parameters of the nonlinear element.
 been found that such a matching procedure is necessary to prevent beam loss 
 \cite{Webb:2015ton}. 
 
-For an idealized  Kapchinskij-Vladimirskij (KV) distribution all particles will have an identical 
+For an idealized  Kapchinskij-Vladimirskij (K-V) distribution all particles will have an 
+identical 
 value for the Hamiltonian
 
 	\begin{equation}
@@ -185,15 +212,17 @@ value for the Hamiltonian
 	\label{eq:hamiltonian}
 	\end{equation}
 
-So that all particles lie on a single hyper-ellipsoid in the transverse phase space. While the 
-KV distribution is useful due to its linear space charge forces which means that all 
-particles experience a single tune depression
-%Give equation?
-it is also prone to producing numerical effects and has been found to not produce 
-long-term stable results in simulation.
+So that all particles lie on a single hyper-ellipsoid in the transverse phase space. The 
+K-V distribution is useful due to its linear space charge forces, which means that all 
+particles have the same tune depression. However, it is also prone to producing numerical 
+artifacts, and has been found to not produce long-term stable results in simulation.
 
-For this reason we use a waterbag distribution is used in these studies. We define a 
-waterbag to be
+To avoid numerical instability a waterbag distribution is used for these studies. It 
+produces a tune spread due to the nonlinear space charge forces. This tune spread 
+cannot be easily compensated for and will be seen to act as a damper on the nonlinear 
+decoherence rate. However, this is a more realistic and less numerically sensitive 
+distribution than the very idealized K-V, making it better suited for these studies. We 
+define a waterbag to be
 
 \begin{equation} \label{eq:distribution}
 f(H) = 
@@ -208,9 +237,10 @@ where $H$, the Hamiltonian is defined in Eq. \ref{eq:hamiltonian} and $H_{max}$ 
 chosen cutoff value. The bunch is populated by generating trial particles inside the real 
 space coordinates bounds of the chosen equipotential cutoff $H_{max}$, if the particle 
 has $ tU \leq \varepsilon$, where $\varepsilon$ is the usual emittance, then the 
-momentum coordinates of the particle are assigned based on the quantity $\varepsilon - 
-tU$. An example of the resulting distribution is shown in Fig. \ref{fig:wbdistr}.
-
+momentum coordinates of the particle are assigned, randomly apportioned,  based on the 
+remaining quantity $\varepsilon - tU$. An example of the resulting distribution is shown in 
+Fig. \ref{fig:wbdistr}.
+%TODO: Could discuss the distribution shape if helpful
 \begin{figure}
 	\includegraphics[width=\columnwidth]{distribution.pdf}%
 	\caption{\label{fig:wbdistr} A waterbag distribution is shown in normalized coordinates, 
@@ -226,7 +256,7 @@ Simulations of IOTA were performed with the tracking code Synergia \cite{synergi
 charge forces were calculated using a self-consistent 2.5D model that slices the beam 
 longitudinally and then applies transverse kicks to the bunch calculated for each slice. As 
 we are primarily concerned with transverse effects a very long bunch $\sigma_z \gg 
-\sigma_{x,y}$ was used with zero initial momentum spread. Under these conditions the 
+\sigma_{x,y}$ was used with zero initial total energy deviation. Under these conditions the 
 space charge kick should be almost entirely uniform along the bunch reducing the space 
 charge model to 2D. 
 
@@ -234,19 +264,28 @@ The lattice elements are all modeled using first-order maps to prevent mismatch 
 from higher-order effect creating a loss of integrability beyond that which will be 
 produced by space charge. The exception to this is the nonlinear magnet which is 
 modeled using a second order drift kick approach. The elliptic potential is a function of a 
-strength parameter $t$ and geometric parameter $c$. For invariance to be maintained 
+strength parameter $t$ and geometric parameter $c$. The first few terms of the multipole 
+expansion for the elliptic potential in normalized coordinates
+$\hat{x}, \hat{y} = x / \sqrt{\beta}, y / \sqrt{\beta}$ are given by %\cite{valishev:napac16}
+\begin{multline} \label{eq:expansion}
+U(\hat{x}, \hat{y}) = \frac{-t}{c^2} \, Im\left\lbrace (\hat{x}+i\hat{y})^2 +
+\frac{2}{3c^2}(\hat{x} + i\hat{y})^4 + \right. \\
+\left. \frac{8}{15c^4}(\hat{x}+i\hat{y})^6 + ... \right\rbrace.
+\end{multline}
+
+The  For invariance to be maintained 
 these parameters must scale with the $\beta$-function as $\beta^{-1}$ and $\sqrt{\beta}$ 
 respectively along the nonlinear magnet. For construction of the physical magnet smooth 
 scaling is not realistically achievable due to engineering constraints and the magnet is 
 broken into 20 thin slices \cite{o2013measurement}. In simulation, it has been seen that 
-20 
-slices with the second order drift-kick scheme is sufficient to provide convergence. In our 
-simulations with the inclusion of space charge we use 60 slices to ensure good 
+20 slices with the second order drift-kick scheme is sufficient to provide convergence. In 
+our simulations with the inclusion of space charge we use 60 slices to ensure good 
 convergence.
 
 \subsection{Adaptive matching for space charge compensation}
 
-Integrability is crucially dependent upon the $\emph{n} \pi$ phase advance condition 
+Integrability is crucially dependent upon the condition that there be an integer-multiple of 
+$ \pi$ phase advance 
 between nonlinear segments. We derived a lattice adjustment procedure to retain this 
 condition across varying beam distributions and currents. First, a new working point for 
 the linear lattice must be constructed to preempt the space charge tune shift, $\Delta Q$. 
@@ -448,14 +487,8 @@ particle. This means that the actual particle displacement is then $x = \sigma_x
 Because of the presence of the nonlinear element there will be amplitude-dependence in 
 the particle tune. may be characterized in terms of
 a unitless strength parameter $t$ and geometric scale factor $c$, with units of
-$m^\frac{1}{2}$, that describes the location of two singularities in the x-plane. The first
-few terms of the multipole expansion for the elliptic potential in normalized coordinates
-$\hat{x}, \hat{y} = x / \sqrt{\beta}, y / \sqrt{\beta}$ are given by %\cite{valishev:napac16}
-\begin{multline} \label{eq:expansion}
-U(\hat{x}, \hat{y}) = \frac{-t}{c^2} \, Im\left\lbrace (\hat{x}+i\hat{y})^2 +
-\frac{2}{3c^2}(\hat{x} + i\hat{y})^4 + \right. \\
-\left. \frac{8}{15c^4}(\hat{x}+i\hat{y})^6 + ... \right\rbrace.
-\end{multline}
+$m^\frac{1}{2}$, that describes the location of two singularities in the x-plane for the 
+potential given by Eq. \ref{eq:expansion}. 
 Note: this expansion is only valid in the region $\sqrt{\hat{x}^2 +\hat{y}^2} < c$. Because 
 of the form of the potential we expect to see just the even 
 terms in amplitude effecting the tune.
