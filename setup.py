@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-u"""ioptics setup script
+u"""rsnibo setup script
 
 :copyright: Copyright (c) 2016 RadiaSoft LLC.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -7,12 +7,12 @@ u"""ioptics setup script
 from pykern.pksetup import setup
 
 setup(
-    name='ioptics',
+    name='rsnibo',
     author='RadiaSoft LLC',
     author_email='pip@radiasoft.net',
-    description='Python tools and supporting files specific to the IOPTICS SBIR project.',
+    description='Python code and related utilities for Nonlinear Integrable Beam Optics (NIBO).',
     license='http://www.apache.org/licenses/LICENSE-2.0.html',
-    url='https://github.com/radiasoft/ioptics',
+    url='https://github.com/radiasoft/rsnibo',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
