@@ -100,7 +100,7 @@ for n in range(numbStruct):
 #
 lattices = {}
 # Dictionary of lattices:
-lattice_repo = '/home/vagrant/jupyter/eidelyur/iota/'
+lattice_repo = '.'
 
 for n in range(numbStruct):
     nameCrrnt = nameStruct[n]
