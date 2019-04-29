@@ -13,9 +13,6 @@
 #
 # Import and setup IPython magics:
 #
-%matplotlib inline
-%reload_ext autoreload
-%autoreload 2
 import sys, os
 import numpy as np
 import scipy
