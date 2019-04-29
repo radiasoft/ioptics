@@ -1,0 +1,109 @@
+!Script used just for the purpose of construct a nonlinear element of varying strengths
+!Note: This version, suffix 'ncook', was modified to produce a sequence which doesn't use the "at, from" language, for
+!bug free translation into Synergia.
+
+! mad-x command file to install integrable optics magnets
+! Date: 6/19/2014 
+! A.Valishev
+
+OPTION, -ECHO;
+ASSIGN, ECHO="out/echo_new";
+
+! Lattice options:
+! 1: One IO Magnet
+! 2: Two IO Magnets
+loption=1;				!setting loption = 1 for making a 1IO_nll lattice
+
+if ( loption == 1 ){TITLE,"IOTA V6.6 IO 1-magnet";};
+if ( loption == 2 ){TITLE,"IOTA V6.6 IO 2-magnets";};
+
+if ( loption == 1 ){call,file="seq/lattice_1IO.seq";};
+if ( loption == 2 ){call,file="seq/lattice_2IO.seq";};
+
+!**** Test sequence ************************
+!use,sequence=iota;twiss;
+!plot,table=twiss,haxis=s,vaxis=betx,bety,noversion,colour=100,interpolate=true,file="out/plot_new";
+
+mu0   = 0.3;  ! phase advance over straight section
+l0    = 1.8;  ! length of the straight section
+nn    = 20;   ! number of nonlinear elements
+!nn 	  = 40;   ! increase this number to 40 for testing
+tn    = 0.1;  ! strength of nonlinear lens
+cn    = 0.01; ! dimensional parameter of nonlinear lens
+ncut  = 0;    ! cut at multipole with power. (0) no cut, (1) quadrupole only, (3) quad+oct, (4) octupole only
+otype = 1;    ! type of magnet (0) thin, (1) thick, only works for octupoles (ncut=4)
+olen  = 0.06; ! length of octupole for thick option. must be < l0/nn
+ncut  = 0;
+!otype = 0;
+nofrom= 1;    ! nofrom is the flag for specifying that the nonlinear elements be given an exact 'at' position 
+!nl1    = 4.911519143; !location of start of first nl magnet
+!nl2    = 33.25671057; !location of start of 2nd nl magnet
+
+musect=mu0+0.5;
+f0=l0/4.0*(1.0+1.0/tan(pi*mu0)^2);
+betae=l0/sqrt(1.0-(1.0-l0/2.0/f0)^2);
+alfae=l0/2.0/f0/sqrt(1.0-(1.0-l0/2.0/f0)^2);
+betas=l0*(1-l0/4.0/f0)/sqrt(1.0-(1.0-l0/2.0/f0)^2);
+value,f0,betae,alfae,betas;
+
+ncreate1(ii,k1,k3):  macro={ n.ii: multipole,knl={0,k1,0,k3};    };
+ncreate2(ii,kk):     macro={ n.ii: octupole,l=olen,k3=kk/olen;   };
+ncreate3(ii,kk,cc):  macro={ n.ii: nllens,knll=kk,cnll=cc;       };
+ninstall(ii,ss,pp):  macro={ install,element=n.ii,at=ss,from=pp; };
+ninstall2(ii,ss,mm): macro={ install,element=n.ii,at=ss+mm;      }; !ninstall2 does not use 'from' language
+
+i=0;
+while(i < nn)
+{
+ i=i+1;
+ sn=l0/nn*(i-0.5);
+ bn=l0*(1-sn*(l0-sn)/l0/f0)/sqrt(1.0-(1.0-l0/2.0/f0)^2);
+ knn=tn*l0/nn/bn^2;
+ cnll=cn*sqrt(bn);
+ knll=knn*cnll^2;
+ k1=knn*2;          ! 1*2!
+ k3=knn/cn^2/bn*16; ! 2/3*4!
+ if( ncut == 0){ exec,ncreate3($i,knll,cnll); }      
+ if( ncut == 1){ exec,ncreate1($i,k1,0);   }      
+ if( ncut == 3){ exec,ncreate1($i,k1,k3);  } 
+ if( ncut == 4){
+	if( otype == 0){ k1=1e-9;exec,ncreate1($i,k1,k3); }
+	else{ exec,ncreate2($i,k3); }
+ }            
+ value,i,bn,sn,k3;
+};
+
+seqedit,sequence=iota;
+i=0;
+while(i < nn)
+{
+ i=i+1;
+ sn=l0/nn*(i-0.5);
+ nl1    = 4.911519143; !location of start of first nl magnet
+ nl2    = 33.25671057; !location of start of 2nd nl magnet
+ if ( loption == 1 ){ exec,ninstall2($i,sn,nl1); }
+ if ( loption == 2 ){ exec,ninstall2($i,sn,nl1); exec,ninstall2($i,sn,nl2); }
+};
+
+endedit;
+
+use,sequence=iota;twiss;
+plot,table=twiss,haxis=s,vaxis=betx,bety,noversion,colour=100,interpolate=true,file="out/plot_new";
+!plot,table=twiss,haxis=s,vaxis=betx,bety,hmin=4.911,hmax=5.811,noversion,colour=100,interpolate=true,file="out/plot";
+
+if ( loption == 1 ){
+   if( ncut == 0 ){ save,sequence=iota,beam,file="seq/nll_20slices.seq"; }
+   else{ 
+   	 if( otype == 0 ){ save,sequence=iota,beam,file="seq/lattice_1IO_oct_new.seq"; }
+	 else{ save,sequence=iota,beam,file="seq/lattice_1IO_oct_t_new.seq"; }
+   }
+}
+if ( loption == 2 ){
+   if( ncut == 0 ){ save,sequence=iota,beam,file="seq/lattice_2IO_nll_new.seq"; }
+   else{ 
+   	 if( otype == 0 ){ save,sequence=iota,beam,file="seq/lattice_2IO_oct_new.seq"; }
+	 else{ save,sequence=iota,beam,file="seq/lattice_2IO_oct_t_new.seq"; }
+   }
+}
+
+stop;

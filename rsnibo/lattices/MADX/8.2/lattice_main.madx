@@ -1,0 +1,289 @@
+! IOTA Lattice
+! Version: 8.0
+! Date:    09/23/2015
+! Author: A.Romanov, A.Valishev, G.Kafka
+! Comments: This file produces bare lattice without special integrable optics features
+! Changelog:
+! 06/18/2014: rearranged the logic of input files and structure (AV)
+! 06/18/2014: added chromaticity correction sextupoles (AV)
+! 06/19/2014: changed rf harmonic to 4 (30 MHz) (AV)
+! 09/16/2014: added macros for inclusion of octupoles or nonlinear elements (AV)
+!----
+! 04/07/2015: rearranged include file (AR) 
+! 04/07/2015: added McMillan version (AR)
+! 04/07/2015: Added combined correctors (AR)
+! 04/07/2015: Sextupoles wrapped with coil spacer gaps (AR)
+! 04/07/2015: Dipoles renamed D->M, to avoid mixing with quads (ABCDE) (AR)
+! 04/07/2015: Refit lattice for the correct main dipoles' aperture 5.8cm (AR)
+! 04/07/2015: Added block for detuning calculation (AR)
+! 04/07/2015: Rearranged order and naming of "kq" constants for quad gradients in lattice specific files (kq1->kq01 and now kq01 is for A1R and index rises clockwise)
+! 04/07/2015: Added script seq1234.bat for sequential execution of selected lattices (win)
+!----
+! 05/19/2015: AV(6.6+) and AR (7.2) versions merged, resulted in 7.3
+! 05/19/2015: IMPORTANT: OCS uses wrong gap for main dipoles (this alters vertical focusing)
+!----
+! 06/25/2015: Add section for output needed for Import tool of OptimX (AR)
+! 09/23/2015: OSC updated to the latest version. DA is about 6 sigmas basing on FMA results. (AR)
+
+OPTION, -ECHO;
+ASSIGN, ECHO="out/echo";
+system,'mkdir seq';
+system,'mkdir out';
+
+! Lattice option switch:
+! 0: OSC
+! 0.1: OSC for 2mm delay
+! 1: One IO Magnet
+! 2: Two IO Magnets
+! 3: Electron Lens
+! 4: McMillan Lens
+loption=1;
+!call, file='latOpt.dat';      !*****this is for script that evaluates all options one by one
+
+
+! switch sextupoles on (1) or off (0)
+sext=1;
+
+if ( loption == 0 ){TITLE,"IOTA V8.2 OSC";};
+if ( loption == 0.1 ){TITLE,"IOTA V8.2 OSC 2mm";};
+if ( loption == 1 ){TITLE,"IOTA V8.2 IO 1-magnet";};
+if ( loption == 2 ){TITLE,"IOTA V8.2 IO 2-magnets";};
+if ( loption == 3 ){TITLE,"IOTA V8.2 Electron Lens";};
+if ( loption == 4 ){TITLE,"IOTA V8.2 McMillan Lens";};
+
+!***************** Read parameters for OSC ****************************
+if ( loption == 0 ){ call,file='include/fields_OSC.dat'; };
+if ( loption == 0.1 ){ call,file='include/fields_OSC_2mm.dat'; };
+
+!**************** Read parameters for 1 IO Magnet *********************
+if ( loption == 1 ){ call,file='include/fields_1NL.dat'; };
+
+!**************** Read parameters for 2 IO Magents ********************
+if ( loption == 2 ){ call,file='include/fields_2NL.dat'; };
+
+!**************** Read parameters for Electron Lens *******************
+if ( loption == 3 ){ call,file='include/fields_EL.dat'; };
+
+!**************** Read parameters for McMillan Lens *******************
+if ( loption == 4 ){ call,file='include/fields_MM.dat'; };
+
+
+call,file='include/elements.madx';
+call,file='include/lines.madx';
+
+if ( loption == 0 ) {
+call,file="include/OSC.madx"; 
+rfc->lag=0;
+beam, particle=electron,energy=0.1005110034,npart=1.0E9, sige=0.00065;
+use,period=iota;
+};
+
+if ( loption == 0.1 ) {
+call,file="include/OSC_2mm.madx"; 
+rfc->lag=0;
+beam, particle=electron,energy=0.1005110034,npart=1.0E9, sige=0.00065;
+use,period=iota;
+};
+
+if ( loption >= 1 ){
+beam, particle=electron,energy=0.150511006,npart=1.0E9;
+use,period=iota;
+};
+
+twiss;
+setplot, post=2;
+if( loption == 0 )
+{
+  plot,table=twiss,haxis=s,vaxis1=betx,bety,vaxis2=dx,hmin=0,hmax=40,vmin=0,-4,vmax=20,4,
+  colour=100,interpolate=true,file="out/plot_OSC",noversion;
+  save,sequence=iota,beam,file="seq/lattice_OSC.seq";
+  use,period=iota;beam,radiate;twiss;emit;
+};
+
+if( loption == 0.1 )
+{
+  plot,table=twiss,haxis=s,vaxis1=betx,bety,vaxis2=dx,hmin=0,hmax=40,vmin=0,-4,vmax=20,4,
+  colour=100,interpolate=true,file="out/plot_OSC_2mm",noversion;
+  save,sequence=iota,beam,file="seq/lattice_OSC_2mm.seq";
+  use,period=iota;beam,radiate;twiss;emit;
+};
+
+if( loption == 1 )
+{
+  plot,table=twiss,haxis=s,vaxis1=betx,bety,vaxis2=dx,hmin=0,hmax=20,vmin=0,-3,vmax=10,3,
+  colour=100,interpolate=true,file="out/plot_1IO",noversion;
+  save,sequence=iota,beam,file="seq/lattice_1IO.seq";
+  use,period=iota;beam,radiate;twiss;emit;
+};
+
+if( loption == 2 )
+{
+  plot,table=twiss,haxis=s,vaxis1=betx,bety,vaxis2=dx,hmin=0,hmax=40,vmin=0,-3,vmax=10,3,
+  colour=100,interpolate=true,file="out/plot_2IO",noversion;
+  save,sequence=iota,beam,file="seq/lattice_2IO.seq";
+  use,period=iota;beam,radiate;twiss;emit;
+};
+
+if( loption == 3)
+{
+  plot,table=twiss,haxis=s,vaxis1=betx,bety,vaxis2=dx,hmin=0,hmax=40,vmin=0,-0.5,vmax=10,2,
+  colour=100,interpolate=true,file="out/plot_EL",noversion;
+  save,sequence=iota,beam,file="seq/lattice_EL.seq";
+  use,period=iota;beam,radiate;twiss;emit;
+};
+
+if( loption == 4)
+{
+  plot,table=twiss,haxis=s,vaxis1=betx,bety,vaxis2=dx,hmin=0,hmax=40,vmin=0,-0.5,vmax=12,2,
+  colour=100,interpolate=true,file="out/plot_MM",noversion;
+  save,sequence=iota,beam,file="seq/lattice_MM.seq";
+  use,period=iota;beam,radiate;twiss;emit;
+};
+
+!****************** Miscellaneous functions *******************************************
+
+/*
+!**** dump the sequence *****************************
+if (loption==0) {save,sequence=iota,beam,file="seq/0.seq";}
+if (loption==0.1) {save,sequence=iota,beam,file="seq/01.seq";}
+if (loption==1) {save,sequence=iota,beam,file="seq/1.seq";}
+if (loption==2) {save,sequence=iota,beam,file="seq/2.seq";}
+if (loption==3) {save,sequence=iota,beam,file="seq/3.seq";}
+if (loption==4) {save,sequence=iota,beam,file="seq/4.seq";}
+*/
+
+
+/*
+!**** print survey ***********************************
+use,period=iota;
+select, flag=survey, column=name,s,x,z;
+survey, file="out/survey";
+select, flag=survey, clear;
+*/
+
+/*
+!**** type lattice at sextupoles ********************
+select, flag=twiss,clear;
+select, flag=twiss,class=sextupole,column=name,betx,bety,dx;
+twiss,file='out/twiss.sext';
+*/
+
+
+
+/*
+!**** tunes chromaticity matching ***********************
+match,sequence=IOTA;
+    if (loption == 1) {
+        vary, name=sk1, step=0.00001;
+        vary, name=sk2, step=0.00001;
+    };  
+    if (loption == 2) {
+        vary, name=sk1, step=0.00001;
+        vary, name=sk2, step=0.00001;
+    };  
+    if (loption == 3) {
+        vary, name=sk4, step=0.00001;
+        vary, name=sk5, step=0.00001;
+    };  
+    if (loption == 4) {
+        vary, name=sk4, step=0.00001;
+        vary, name=sk5, step=0.00001;
+    };  
+    global,sequence=IOTA,DQ1=0;
+    global,sequence=IOTA,DQ2=0;
+    Lmdif, calls=100, tolerance=1.0e-11;
+endmatch;
+value,sk1,sk2,sk3,sk4, sk5;
+*/
+
+/*
+!**** tunes and betas chromaticity matching, READ COMMENTS***********************
+match,sequence=IOTA;  !Use this if only tunes chromaticity is matched
+!match,CHROM,sequence=IOTA; !USE this if beta functions chromaticity is matched
+
+!Symmetrical case: rearrange commenting in the fields_*.dat file(s)
+!        vary, name=sk1, step=0.00001;  !SC1
+!        vary, name=sk2, step=0.00001;  !SC2
+        vary, name=sk3, step=0.00001;  !SD1//<--these sextupoles could be ommited for all 4 variants
+        vary, name=sk4, step=0.00001;  !SE1
+!        vary, name=sk5, step=0.00001;  !SE2
+!        vary, name=sk6, step=0.00001;  !SA1
+
+!General case: rearrange commenting in the fields_*.dat file(s)
+!        vary, name=sk1r, step=0.00001;  
+!        vary, name=sk1l, step=0.00001;  
+!        vary, name=sk2r, step=0.00001;
+!        vary, name=sk2l, step=0.00001;
+!!        vary, name=sk3r, step=0.00001; //<--these sextupoles could be ommited for all 4 variants
+!!        vary, name=sk3l, step=0.00001; //<--these sextupoles could be ommited for all 4 variants
+!        vary, name=sk4r, step=0.00001;
+!        vary, name=sk4l, step=0.00001;
+!        vary, name=sk5r, step=0.00001;
+!        vary, name=sk5l, step=0.00001;
+!        vary, name=sk6r, step=0.00001;
+!        vary, name=sk6l, step=0.00001;
+    global,sequence=IOTA,DQ1=0;
+    global,sequence=IOTA,DQ2=0;
+!    constraint,sequence=IOTA,range=ioR,wx=0; ! NL1&2
+!    constraint,sequence=IOTA,range=ioR,wy=0; ! NL1&2
+!    constraint,sequence=IOTA,range=ioL,wx=0; ! ONLY for NL2
+!    constraint,sequence=IOTA,range=ioL,wy=0; ! ONLY for NL2
+!    constraint,sequence=IOTA,range=el1,wx=0;         ! EL&MM
+!    constraint,sequence=IOTA,range=el1,wy=0;         ! EL&MM
+    JACOBIAN, calls=200, tolerance=1.0e-11;
+endmatch;
+value,sk1r,sk1l,sk2r,sk2l,sk3r,sk3l,sk4r,sk4l,sk5r,sk5l,sk6r,sk6l;
+*/
+
+/*
+!****Plot chromatic distortions of lattice functions**********
+!===Create table of lattice functions at altered energy
+SELECT,FLAG=TWISS,column=name,s,betx,bety;
+twiss,deltap=0.001, file=fTwissDP;
+READMYTABLE, FILE="fTwissDP", TABLE=twissDP;
+!
+!===init twiss table with necessary columns
+!
+SELECT, FLAG=TWISS, column=dBetX, dBetY;
+twiss;
+!
+!===Macros for values at necessary columns calculations (chromatic distortions)
+calcBetas(n_row) : macro = {
+    dBetX=100*(table(twiss,betx,n_row)-table(twissDP,betx,n_row))/table(twiss,betx,n_row);
+    dBetY=100*(table(twiss,bety,n_row)-table(twissDP,bety,n_row))/table(twiss,bety,n_row);
+}
+!===Macros for filling prepared (extended) TWISS table with calculated values
+writeTableLine(n_row) : macro = {
+    exec, calcBetas(n_row);
+    FILL, TABLE=twiss, ROW=n_row;    
+}
+!
+!===Loop to fill TWISS table
+nRow=0;
+len = table(twiss,tablelength);
+WHILE (nRow<len) {
+    nRow = nRow + 1;
+    exec, writeTableLine($nRow);
+};
+!===Write extended TWISS table to file
+WRITE, TABLE=twiss, FILE="chromTwiss";
+!===Plot chromatic distortions
+!plot,table=twiss,haxis=s,vaxis1=betx,bety,vaxis2=dBetX,dBetY,hmin=0,hmax=40,vmin=0,-2,vmax=10,2,
+plot,table=twiss,haxis=s,vaxis1=dBetX,dBetY,hmin=0,hmax=40,vmin=-20,vmax=20,
+colour=100,interpolate=true;
+*/
+
+
+/*
+!**** detuning calculation to choose better sextupoles for DA ***********************
+SODD, DETUNE, 
+      START_STOP = 0, 39.9682, 
+      MULTIPOLE_ORDER_RANGE = 1,3,
+      PRINT_AT_END;
+*/
+/*
+use,period=iota;beam,radiate;twiss;emit;
+*/
+
+
+stop;

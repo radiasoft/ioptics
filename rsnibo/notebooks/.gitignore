@@ -1,0 +1,6 @@
+.ipynb_checkpoints/
+*.txt
+checkpoint/
+log
+*.h5
+*.pdf
