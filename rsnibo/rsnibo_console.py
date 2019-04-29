@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-u"""Front-end command line for :mod:`ioptics`.
+u"""Front-end command line for :mod:`rsnibo`.
 
 See :mod:`pykern.pkcli` for how this module is used.
 
-:copyright: Copyright (c) 2016 RadiaSoft LLC.  All Rights Reserved.
+:copyright: Copyright (c) 2016-2019 RadiaSoft LLC.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from __future__ import absolute_import, division, print_function
@@ -14,7 +14,7 @@ from pykern import pkcli
 
 
 def main():
-    return pkcli.main('ioptics')
+    return pkcli.main('rsnibo')
 
 
 if __name__ == '__main__':
