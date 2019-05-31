@@ -39,6 +39,8 @@ from rssynergia.base_diagnostics import diagplot
 from rssynergia.elliptic import elliptic_beam6d
 import synergia
 import synergia_workflow
+from synergia_workflow import Options
+import inspect
 
 def next_break():
     selection = 'loop'
@@ -51,6 +53,9 @@ def next_break():
             return 2
 
 def plotcoordDistr(Particles,numbParticles):
+#    
+# Plot X-X', Y-Y', and X-Y distributions for the first 'numbParticles' of the bunch 'Particles'
+#
     newCoordinates = np.zeros((6,numbParticles))
     for k in range(numbParticles):
         for j in range(6):
@@ -65,27 +70,72 @@ def plotcoordDistr(Particles,numbParticles):
     gs = gridspec.GridSpec(1, 3, width_ratios=[1,1,1]) 
     
     ax0 = plt.subplot(gs[0])
-    plt.plot(newCoordinates[0,:],newCoordinates[1,:],'.',color='r')
+    plt.plot(newCoordinates[0,:],1.e3*newCoordinates[1,:],'.',color='r')
     ax0.set_title('X-X\' Coordinate Space',fontsize='16')
-    ax0.set_xlim([-1.5*xmax,1.5*xmax])
-    ax0.set_ylim([-1.5*xpmax,1.5*xpmax])
+    ax0.set_xlim([-1.25*xmax,1.25*xmax])
+    ax0.set_ylim([-1.25e3*xpmax,1.25e3*xpmax])
+    ax0.set_xlabel('X, m')
+    ax0.set_ylabel('X\', mrad')
     
     ax1 = plt.subplot(gs[1])
-    plt.plot(newCoordinates[2,:],newCoordinates[3,:],'.',color='b')
+    plt.plot(newCoordinates[2,:],1.e3*newCoordinates[3,:],'.',color='b')
     ax1.set_title('Y-Y\' Coordinate Space',fontsize='16')
-    ax1.set_xlim([-1.5*ymax,1.5*ymax])
-    ax1.set_ylim([-1.5*ypmax,1.5*ypmax])
+    ax1.set_xlim([-1.25*ymax,1.25*ymax])
+    ax1.set_ylim([-1.25e3*ypmax,1.25e3*ypmax])
+    ax1.set_xlabel('Y, m')
+    ax1.set_ylabel('Y\', mrad')
     
     ax2 = plt.subplot(gs[2])
     plt.plot(newCoordinates[0,:],newCoordinates[2,:],'.',color='k')
     ax2.set_title('X-Y Trace Space',fontsize='16')
-    ax2.set_xlim([-1.5*xmax,1.5*xmax])
-    ax2.set_ylim([-1.5*ymax,1.5*ymax])
+    ax2.set_xlim([-1.25*xmax,1.25*xmax])
+    ax2.set_ylim([-1.25*ymax,1.25*ymax])
+    ax2.set_xlabel('X, m')
+    ax2.set_ylabel('Y, m')
     
     fig.canvas.set_window_title('Synergia Phase Space Distribution')
     fig.tight_layout()
     plt.show()
     return
+
+def nTurnsMap(oneTurnMap,powerNturns):
+#    
+# Result is oneTurnMap^(2^powerNturns)
+#
+    print "Input of nTurnsMap:"
+    print np.array2string (mapOneTurn,max_line_width = 200, precision = 5)
+    turnsMap = oneTurnMap
+    for power in range(powerNturns):
+        mapCrrnt = turnsMap.dot(turnsMap)
+        turnsMap = mapCrrnt
+    print "Output of nTurnsMap:"
+    print np.array2string (turnsMap,max_line_width = 200, precision = 5)
+    return turnsMap    
+    
+def pullBunch(bunch,oneTurnMap,powerNturns):
+#    
+# Result is pulling of whole bunch particles through number of turns = 2^powerNturns,
+# using oneTurnMap for each turn
+#
+    multiTurnsMap = nTurnsMap(oneTurnMap,powerNturns)
+    nParticles = len(bunch)
+    newBunch = np.zeros((nParticles,7))
+    for partcl in range(nParticles):
+        for i in range(6):
+            for j in range(6):
+                newBunch[partcl,i] += bunch[partcl,j]*multiTurnsMap[j,i]
+        newBunch[partcl,6] = bunch[partcl,6]
+    return newBunch
+
+def printBunch(bunch,nParticles):
+#
+# Print data for first 'nParticles' of the 'bunch'
+#
+    print "Number of particles in the bunch = {}".format(len(bunch))
+    for partcl in range(nParticles):
+        print "Particle {}: x = {}, px = {}, y = {}, py = {}, s = {}, ps = {}, id = {}". \
+            format(partcl,bunch[partcl,0],bunch[partcl,1],bunch[partcl,2],bunch[partcl,3], \
+                  bunch[partcl,4],bunch[partcl,5],bunch[partcl,6])
 #
 # Names of the structures:
 #
@@ -152,6 +202,11 @@ for n in range(2):
             elem.set_string_attribute("extractor_type", "chef_map") 
     nstepsCrrnt = len(latticeCrrnt.get_elements())*nsteps_per_element
     optsCrrnt = workflow.make_opts(nameCrrnt, order, output_dir, nstepsCrrnt, nsteps_per_element)
+#    
+# List of all attributes of optsCrrnt for checking:    
+    attrList = inspect.getmembers(optsCrrnt)
+    print "attrList (optsCrrnt = workflow.make_opts) = {}".format(attrList)
+#
     optsCrrnt.macro_particles = numbMacroPrtcls
     optsCrrnt.steps_per_element = nsteps_per_element
     stepperCrrnt = synergia.simulation.Independent_stepper_elements \
@@ -224,6 +279,7 @@ for n in range(2):
     optsCrrnt.lattice_simulator = lattice_simulatorCrrnt  
     for index in range(len(optsCrrnt.emits)):
         bunchCrrnt = particlesCrrnt[index]
+        printBunch(bunchCrrnt,10)
         initialH,initialI = elliptic_sp.calc_bunch_H(bunchCrrnt,optsCrrnt)
         bunch_mean = np.mean(initialH)
         bunch_std = np.std(initialH)
@@ -313,18 +369,113 @@ print "Before main simulation"
 for n in range(1):
     nameCrrnt = nameStruct[n]
     latticeCrrnt = synergia.lattice.MadX_reader().get_lattice("iota", lattices[nameCrrnt])
+# --------------------------    
+# Begin of my analysis of the lattice structure:
+    numbElem = 0
+    arcLength_old = 0.
+    minBeta_total = 1.e10
+    maxElem_length = 0.
+    maxSteps_elem = 0
+    nstep_0 = 0
+    nstep_1 = 0
+    nstep_2 = 0
+    nstep_3 = 0
+    nstep_4 = 0
+    nstep_5 = 0
     for elem in latticeCrrnt.get_elements():
         if elem.get_type() == 'nllens':
             elem.set_string_attribute("extractor_type", "chef_propagate")
         else:
             elem.set_string_attribute("extractor_type", "chef_map") 
+# 
+# Definition of number of the steps for each element individual (step must be less then 
+# minimal beta-function inside the element):
+#
+        numbElem += 1
+        lattice_simulator_crrnt = synergia.simulation.Lattice_simulator(latticeCrrnt, 1)
+        lattice_functions = lattice_simulator_crrnt.get_lattice_functions(elem)
+#        elemName = lattice_functions.get_name
+        arcLength = lattice_functions.arc_length 
+        elemLength = arcLength - arcLength_old
+        maxElem_length_new = max(maxElem_length,elemLength)
+        if maxElem_length_new > maxElem_length:
+            maxElem_length = maxElem_length_new
+            numb_maxElem_length = numbElem
+        arcLength_old = arcLength
+        elemBeta_x = lattice_functions.beta_x
+        elemBeta_y = lattice_functions.beta_y
+        minBeta = min(elemBeta_x,elemBeta_y)
+        minBeta_total_new = min(minBeta_total, minBeta)
+        if minBeta_total_new < minBeta_total:
+            minBeta_total = minBeta_total_new
+            numb_minBeta_total = numbElem
+#  For understanding:
+#        print "Element {}: arc = {} m, length = {} m, beta_x = {} m, beta_y = {} m, minBeta = {} m". \
+#              format(numbElem,arcLength,elemLength,elemBeta_x,elemBeta_y,minBeta)
+#
+# Selection of optimal step inside the element:
+        if (elemLength == 0.):
+            stepCrrnt = 0.
+            nsteps_element = 0
+        else:
+            stepCrrnt = .75*minBeta
+            nsteps_element = int(elemLength/stepCrrnt)+1
+            stepCrrnt = elemLength/nsteps_element
+        maxSteps_elem_new = max(maxSteps_elem,nsteps_element)
+        if maxSteps_elem_new > maxSteps_elem:
+            maxSteps_elem = maxSteps_elem_new
+            numb_maxSteps_elem = numbElem
+# For understanding:            
+        if nsteps_element == 0:
+            nstep_0 += 1
+        if nsteps_element == 1:
+            nstep_1 += 1
+        if nsteps_element == 2:
+            nstep_2 += 1
+        if nsteps_element == 3:
+            nstep_3 += 1
+        if nsteps_element == 4:
+            nstep_4 += 1
+        if nsteps_element == 5:
+            nstep_5 += 1
+#        print "     Steps = {}, stepCrrnt = {} m". \
+#              format(nsteps_element,stepCrrnt)
+    print \
+    "Total minBeta = {} m (number = {}), MaxElem_length = {} m (number = {}), maxSteps = {} (number = {})". \
+          format(minBeta_total,numb_minBeta_total,maxElem_length,numb_maxElem_length, \
+                 maxSteps_elem,numb_maxSteps_elem)
+    print "'0' = {}, '1' = {}, '2' = {}, '3' = {}, '4' = {}, '5' = {}". \
+          format (nstep_0,nstep_1,nstep_2,nstep_3,nstep_4,nstep_5)
+# End of my analysis of the lattice structure
+# -------------------------
+    print "Before 'get_linear_one_turn_map'..."
+    latticeSimulatorCrrnt = synergia.simulation.Lattice_simulator(latticeCrrnt, 1)
+    mapOneTurn = latticeSimulatorCrrnt.get_linear_one_turn_map()
+    print "One Turn Map:"
+    print np.array2string (mapOneTurn,max_line_width = 200, precision = 5)
+    print "after 'get_linear_one_turn_map'..."
+
+    newBunch = pullBunch(bunchCrrnt,mapOneTurn,1)
+    printBunch(newBunch,10)
+
     nstepsCrrnt = len(latticeCrrnt.get_elements())*nsteps_per_element
+    print "Before 'workflow.make_opts': nameCrrnt = {}, order = {}".format(nameCrrnt,order)
     optsCrrnt = workflow.make_opts(nameCrrnt, order, output_dir, nstepsCrrnt, nsteps_per_element)
+#
+# List of all attributes of optsCrrnt for checking:
+    attrList = inspect.getmembers(optsCrrnt)
+    print "attrList (optsCrrnt = workflow.make_opts) = {}".format(attrList)
+#
     optsCrrnt.macro_particles = numbMacroPrtcls
     optsCrrnt.steps_per_element = nsteps_per_element
     print "Before stepperCrrnt"
     stepperCrrnt = synergia.simulation.Independent_stepper_elements \
                    (latticeCrrnt, optsCrrnt.map_order, optsCrrnt.steps_per_element)
+#
+# List of all attributes of stepperCrrnt for checking:
+    attrList = inspect.getmembers(stepperCrrnt)
+    print "attrList (stepperCrrnt = synergia.simulation.Independent_stepper_elements) = {}".format(attrList)
+#
     print "Before lattice_simulatorCrrnt"
     lattice_simulatorCrrnt = stepperCrrnt.get_lattice_simulator()
     print "After lattice_simulatorCrrnt"
@@ -342,12 +493,24 @@ for n in range(1):
     print "Saving basic diagnostics each step to file {}".format(basicFileName)
     nextBreakFlag = int(next_break())
     if (nextBreakFlag == 1):
-        num_partcls = int(synergia.bunch.Diagnostics_basic.get_num_particles())
-        print 'num_partcls =', num_partcls
+        bunchDiag = synergia.bunch.Diagnostics_basic
+#
+# List of all attributes of synergia.bunch.Diagnostics_basic for checking:
+        attrList = inspect.getmembers(bunchDiag)
+        print "attrList (bunchDiag = synergia.bunch.Diagnostics_basic) = {}".format(attrList)
+#
+        repetition = bunchDiag.get_repetition
+        print 'repetition = {}'.format(repetition)
     
 # include full diagnostics
     full2FileName = 'full2_strct'+str(int(n))+'.h5'
     fulldiag = synergia.bunch.Diagnostics_full2(full2FileName, optsCrrnt.output_dir)
+    print "Saving basic diagnostics each step to file {}".format(basicFileName)
+#
+# List of all attributes of fulldiag for checking:
+    attrList = inspect.getmembers(fulldiag)
+    print "attrList (fulldiag = synergia.bunch.Diagnostics_full2) = {}".format(attrList)
+#
     bunch_simulator.add_per_turn(fulldiag)
     print "Saving full2 diagnostics each turn to file {}".format(full2FileName)
 
@@ -355,6 +518,11 @@ for n in range(1):
     optsCrrnt.turnsPerDiag = 10
     particleFileName = 'particles_strct'+str(int(n))+'.h5'
     particlediag = synergia.bunch.Diagnostics_particles(particleFileName,0,0,optsCrrnt.output_dir)
+#
+# List of all attributes of synergia.bunch.Diagnostics_particles for checking:
+    attrList = inspect.getmembers(fulldiag)
+    print "attrList (particlediag = synergia.bunch.Diagnostics_particles) = {}".format(attrList)
+#
     bunch_simulator.add_per_turn(particlediag, optsCrrnt.turnsPerDiag)
     print "Saving turn-by-turn particle data every {} turns to file {}". \
           format(optsCrrnt.turnsPerDiag,particleFileName)
@@ -382,14 +550,23 @@ for n in range(1):
     print "setting up propagator for rank {}".format(myrank)
     print "Before propagator"
     propagator = synergia.simulation.Propagator(stepperCrrnt)
+#
+# List of all attributes of synergia.simulation.Propagator for checking:
+    attrList = inspect.getmembers(propagator)
+    print "attrList (propagator = synergia.simulation.Propagator) = {}".format(attrList)
+#
     print "After propagator and before checkpoint_priod"
     propagator.set_checkpoint_period(optsCrrnt.checkpointperiod)
 
     print "Starting simulation for rank {}".format(myrank)
-    propagator.propagate(bunch_simulator,optsCrrnt.turns, optsCrrnt.maxturns,optsCrrnt.verbosity)
+    propagatorCrrnt = \
+    propagator.propagate(bunch_simulator,optsCrrnt.turns,optsCrrnt.maxturns,optsCrrnt.verbosity)
+#
+# List of all attributes of propagatorCrrnt = propagator.propagate for checking:
+    attrList = inspect.getmembers(propagatorCrrnt)
+    print "attrList (propagatorCrrnt = propagator.propagate) = {}".format(attrList)
+#
     print "End of simulation"
 
 # clean up files
     workflow.cleanup(optsCrrnt.output_dir)
-
-  
