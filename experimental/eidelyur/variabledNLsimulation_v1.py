@@ -5,7 +5,7 @@
 #    Started at June 13, 2019
 #
 import synergia
-import sys
+import os, sys
 import inspect
 import numpy as np
 import matplotlib.pyplot as plt
@@ -107,39 +107,60 @@ class Pickle_helper:
 
 class Ramp_actions(synergia.simulation.Propagate_actions, Pickle_helper):
 # The arguments to __init__ are what the Ramp_actions instance is initialized with
-    def __init__(self, multiplier1,multiplier2):
+    def __init__(self, multiplier1,multiplier2, outputFlag):
         selfObject = synergia.simulation.Propagate_actions.__init__(self)
 # To recognize attributes of 'selfObject':
 #        printAttributes(selfObject,'selfObject','synergia.simulation.Propagate_actions.__init__(self)')
 
 # Pickling the arguments to the initializer allows the module to resume
 # after checkpointing. They should be in the same order as the arguments to __init__.
-        Pickle_helper.__init__(self, multiplier1,multiplier2)
+        Pickle_helper.__init__(self, multiplier1, multiplier2, outputFlag)
         self.multiplier1 = multiplier1
         self.multiplier2 = multiplier2
+        self.outputFlag = outputFlag
     def turn_end_action(self, stepper, bunch, turn_num):
-# For checking:        
-        print "Modifying lattice:"
+#---------------------------
+# For checking:
+#        testObject = stepper.get_lattice_simulator().get_lattice()
+# To recognize attributes of 'testObject':
+#        printAttributes(testObject,'testObject','stepper.get_lattice_simulator().get_lattice()')
+#        print "testName = '{}'".format(testObject.get_name())
+#---------------------------
+# Output title for checking of variables update:   
+        if self.outputFlag == 1:
+            print "Modifying lattice:"
         for element in stepper.get_lattice_simulator().get_lattice().get_elements():
             if element.get_type() == "nllens":
                 old_knll = element.get_double_attribute("knll")
                 element.set_double_attribute("knll", self.multiplier1*old_knll)
                 old_cnll = element.get_double_attribute("cnll")
                 element.set_double_attribute("cnll", self.multiplier2*old_cnll)
-# For checking:        
-                print "Update", element.get_name(),": knll = ",old_knll," --> ",self.multiplier1*old_knll, \
-                "; cnll = ",old_cnll," --> ",self.multiplier2*old_cnll
+# Output for hecking of variables update:  
+                if ((self.outputFlag == 1) and (element.get_name() == "n.11")):
+                    print element.get_name(),":  knll=",old_knll,"-->", \
+                       self.multiplier1*old_knll, ";  cnll=",old_cnll,"-->",self.multiplier2*old_cnll
         stepper.get_lattice_simulator().update()
     
 # Routine Simulation Setup
 
 # Lattice:
-print "\nIOTA Nonlinear lattice '.../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx'\n"
+fileIOTA = ".../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx"
+print "\nIOTA Nonlinear lattice: {} \n".format(fileIOTA)
 lattice = synergia.lattice.MadX_reader().get_lattice("iota", \
 "../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx")
+#----------------------------------
 # To recognize attributes of 'lattice':
 # printAttributes(lattice,'lattice','synergia.lattice.MadX_reader().get_lattice')
 
+# madxAttributes = synergia.lattice.MadX_reader()
+# To recognize attributes of 'doubleAttributes':
+# printAttributes(madxAttributes,'madxAttributes','synergia.lattice.MadX_reader()')
+
+# doubleVariable = madxAttributes.get_double_variable()
+# To recognize attributes of 'doubleVariable':
+# printAttributes(doubleVariable,'doubleVariable','madxAttributes.get_double_variablte()')
+# print "doubleVariable = ", doubleVariable
+#---------------------------------
 '''
 # For checking only:
 k = 0
@@ -225,10 +246,15 @@ if diagnostic_flag == 'turn_particles':
     bunch_simulator.add_per_turn(synergia.bunch.Diagnostics_particles("turn_particles.h5"))
 '''    
 
+totalTurns = 10
+
 #---------------------------
 # Propagate
 #---------------------------
 # Ramp action is instantiated and passed to the propagator instance during the propagate method
+
+        
+plotAfterEachTurn = 2
 
 print "\n-------------------\n"
 print "           Nonlinear parameters are not changed"
@@ -237,37 +263,73 @@ print "\n-------------------\n"
 bunch = bunch_origin
 bunch_simulator = synergia.simulation.Bunch_simulator(bunch)
 
-ramp_actions = Ramp_actions(1.,1.)
 propagator = synergia.simulation.Propagator(stepper)
-propagator.set_checkpoint_period(0)
-propagator.set_checkpoint_with_xml(True)
-for turnCrrnt in range(5):
-    propagatorCrrnt = propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)
-    turnNumber = turnCrrnt+1
-    print "              After turn ",turnNumber
+# propagator.set_checkpoint_period(0)
+# propagator.set_checkpoint_with_xml(True)
+
+nUpdate = 0
+totalTimeCPU = 0.
+for turnCrrnt in range(totalTurns):
+    timeStart = os.times()
+    propagatorCrrnt = propagator.propagate(bunch_simulator, 1, 1, 0)
 # To recognize attributes of 'propagatorCrrnt':
 #    printAttributes(propagatorCrrnt,'propagatorCrrnt', \
 #                    'propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)')
-    bunchParticles = bunch.get_local_particles()
-    plotcoordDistr(bunchParticles)
-
+    turnNumber = turnCrrnt+1
+    timeEnd = os.times()
+    timeOfTurn = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
+    totalTimeCPU += timeOfTurn
+    print ('Turn %3d is completed (CPU time = %6.3f seconds)' % (turnNumber, timeOfTurn))
+    nUpdate += 1
+    if nUpdate == plotAfterEachTurn:
+        nUpdate = 0
+        print "\n              After {} turns:\n".format(turnNumber)
+        timeStart = os.times()
+        bunchParticles = bunch.get_local_particles()
+        plotcoordDistr(bunchParticles)
+        timeEnd = os.times()
+        timeOfPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
+        totalTimeCPU += timeOfPlot
+        print ('\nPlotting is completed (CPU time = %6.3f seconds)\n' % timeOfPlot)
+print ('\nFor %5d turns CPU time = %6.3f seconds\n' % (totalTurns, totalTimeCPU))
+        
+updateAfterEachTurn = 2
 
 print "\n-------------------\n"
-print "           Nonlinear parameters will be CHANGED with values = 5% after each turn"
+print "           Nonlinear parameters will be CHANGED with values = 5% after each {} turns". \
+format(updateAfterEachTurn)
 print "\n-------------------\n"
 bunch = bunch_origin
 bunch_simulator = synergia.simulation.Bunch_simulator(bunch)
 
-ramp_actions = Ramp_actions(1.05,.95)
 propagator = synergia.simulation.Propagator(stepper)
-propagator.set_checkpoint_period(0)
-propagator.set_checkpoint_with_xml(True)
-for turnCrrnt in range(5):
-    propagatorCrrnt = propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)
-    turnNumber = turnCrrnt+1
-    print "              After turn ",turnNumber
+# propagator.set_checkpoint_period(0)
+# propagator.set_checkpoint_with_xml(True)
+
+nUpdate = 0
+totalTimeCPU = 0.
+for turnCrrnt in range(totalTurns):
+    timeStart = os.times()
+    propagatorCrrnt = propagator.propagate(bunch_simulator, 1, 1, 0)
 # To recognize attributes of 'propagatorCrrnt':
 #    printAttributes(propagatorCrrnt,'propagatorCrrnt', \
 #                    'propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)')
-    bunchParticles = bunch.get_local_particles()
-    plotcoordDistr(bunchParticles)
+    turnNumber = turnCrrnt+1
+    timeEnd = os.times()
+    timeOfTurn = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
+    totalTimeCPU += timeOfTurn
+    print ('Turn %3d is completed (CPU time = %6.3f seconds)' % (turnNumber, timeOfTurn))
+    nUpdate += 1
+    if nUpdate == updateAfterEachTurn:
+        nUpdate = 0
+        print "\n              After {} turns:\n".format(turnNumber)
+        timeStart = os.times()
+        bunchParticles = bunch.get_local_particles()
+        plotcoordDistr(bunchParticles)
+        ramp_actions = Ramp_actions(1.05,.95,1)   
+        propagatorCrrnt = propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)
+        timeEnd = os.times()
+        timeUpdateAndPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
+        totalTimeCPU += timeUpdateAndPlot
+        print ('\nUpdate and plotting are completed (CPU time = %6.3f seconds)\n' % timeUpdateAndPlot)
+print ('\nFor %5d turns CPU time = %6.3f seconds\n' % (totalTurns, totalTimeCPU))
