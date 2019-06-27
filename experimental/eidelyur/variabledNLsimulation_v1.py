@@ -197,7 +197,7 @@ class Ramp_actions(synergia.simulation.Propagate_actions, Pickle_helper):
                 element.set_double_attribute("knll", self.multiplier1*old_knll)
                 old_cnll = element.get_double_attribute("cnll")
                 element.set_double_attribute("cnll", self.multiplier2*old_cnll)
-# Output for checking of variables update:  
+# Output for checking of variables update checking nonlinear lens 'n.11' only:  
                 if ((self.outputFlag == 1) and (element.get_name() == "n.11")):
                     print element.get_name(),":  knll=",old_knll,"-->", \
                        self.multiplier1*old_knll, ";  cnll=",old_cnll,"-->",self.multiplier2*old_cnll
@@ -209,22 +209,44 @@ def simulation():
 #
 # Interactive input of parameters:
 #
-    particlesInBunch = int(raw_input('\nTotal number if particles:')) 
-    totalTurns = int(raw_input('\nTotal number if turns:')) 
-    plotAfterTurns = raw_input('\nPeriodicity (in turns) of plots of distributions (linear structure):')
+    particlesInBunch = int(raw_input('\nTotal number if particles (= -1 to interrupt simulation):')) 
+    if particlesInBunch == -1:
+        return
+    totalTurns = int(raw_input('\nTotal number if turns (= -1 to interrupt simulation):')) 
+    if totalTurns == -1:
+        return
+    plotAfterTurns = int(raw_input( \
+    '\nPeriodicity (in turns) of plots of distributions \n(linear structure; = -1 to interrupt simulation):'))
+    if plotAfterTurns == -1:
+        return
     updateAfterTurns = int(raw_input( \
-    '\nPeriodicity (in turns) of changing of parameters \nand distribution plots (nonlinear structure)'))
-    updateOutputFlag = int(raw_input('\nupdateOutputFlag (0 - no, 1 - yes):'))
-    knlMultiplyier = float(raw_input('\nMultiplyier for knl:'))
-    cnllMultiplyier = float(raw_input('\nMultiplyier for cnll:'))
+    '\nPeriodicity (in turns) of changing of parameters and distribution plots \n(nonlinear structure; = -1 to interrupt simulation)'))
+    if updateAfterTurns == -1:
+        return
+    updateOutputFlag = int(raw_input('\nupdateOutputFlag (0 - no, 1 - yes, -1  - to interrupt simulation):'))
+    if updateOutputFlag == -1:
+        return
+# Multiplier 'knlMultiplier' is the same for all nonlinear lenses:   
+    knlMultiplier = float(raw_input('\nMultiplier for knl (= -1. to interrupt simulation):'))
+    if knlMultiplier == -1:
+        return
+# Multiplier 'cnllMultiplier' is the same for all nonlinear lenses:   
+    cnllMultiplier = float(raw_input('\nMultiplier for cnll (= -1. to interrupt simulation):'))
+    if cnllMultiplier == -1:
+        return
+    updateInsideSmlnFlag = int(raw_input( \
+    '\nRedefine parameters inside simulation (0 - no, 1 - yes, -1  - to interrupt simulation):'))
+    if updateInsideSmlnFlag == -1:
+        return
 
-    print "particlesInBunch = ",particlesInBunch
+    print "     Parameters: \nparticlesInBunch = ",particlesInBunch
     print "totalTurns = ",totalTurns
     print "plotAfterTurns = ",plotAfterTurns
     print "updateAfterTurns = ",updateAfterTurns
     print "updateOutputFlag = ",updateOutputFlag
-    print "knlMultiplyier = ",knlMultiplyier
-    print "cnllMultiplyier = ",cnllMultiplyier
+    print "knlMultiplier = ",knlMultiplier
+    print "cnllMultiplier = ",cnllMultiplier
+    print "updateInsideSmlnFlag = ",updateInsideSmlnFlag
     
 # Lattice:
 
@@ -441,8 +463,7 @@ def simulation():
     print ('\nFor %5d turns CPU time = %6.3f seconds\n' % (totalTurns, totalTimeCPU))
         
     print "\n-------------------\n"
-    print "           Nonlinear parameters will be CHANGED with values = 5% after each {} turns". \
-          format(updateAfterTurns)
+    print "           Nonlinear parameters will be CHANGED after each {} turns".format(updateAfterTurns)
     print "\n-------------------\n"
 
 # Кe-setting the original 'bunch_origin' object, because it was changed (for some unknown reason) 
@@ -508,8 +529,20 @@ def simulation():
             print "\n              After {} turns:\n".format(turnNumber)
             timeStart = os.times()
             plotcoordDistr(bunchParticles)
-# Args of 'Ramp_actions' method are: multiplyers for knl and cnll ant outputFlag         
-            ramp_actions = Ramp_actions(knlMultiplyier,cnllMultiplyier,updateOutputFlag)   
+#
+# Possibility to redefine parameters inside simulation:
+#
+            if updateInsideSmlnFlag == 1:
+                print "Old multiplyier for knl = {}".format(knlMultiplier)
+# Multiplier 'knlMultiplier' is the same for all nonlinear lenses:   
+                knlMultiplier = float(raw_input('\nNew multiplyier for knl:'))
+                print "Old multiplyier for cnll = {}".format(cnllMultiplier)
+# Multiplier 'cnllMultiplier' is the same for all nonlinear lenses:   
+                cnllMultiplier = float(raw_input('\nNew multiplyier for cnll:'))
+#
+# Args of 'Ramp_actions' method are: multipliers for knl and cnll and outputFlag 
+#
+            ramp_actions = Ramp_actions(knlMultiplier,cnllMultiplier,updateOutputFlag)   
             propagatorCrrnt = propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)
             timeEnd = os.times()
             timeUpdateAndPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
@@ -552,6 +585,6 @@ while selection == 'loop':
     print'Your selection is ',selection
     if selection == 'yes':
         selection = 'loop'
-    if selection == 'no':
-        exit(0)
+#    if selection == 'no':
+#        exit(0)
         
