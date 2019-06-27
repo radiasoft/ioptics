@@ -22,7 +22,7 @@ def plotcoordDistr(bunchParticles):
 # Plot X-X', Y-Y', and X-Y distributions for 'bunchParticles'
 #
 # bunchParticles is a 'bunch' object;
-# particles is 2D array: (numberOfParticles,(x,x',y,y',s(?),dp(?),ID(?)));
+# particles is 2D array: (numberOfParticles,(x,x',y,y',s,dp(?),ID);
 #
     numbPartcls = bunchParticles.shape[0]
     particles = bunchParticles.real
@@ -86,20 +86,19 @@ def plotTracks(tracksCoords,numberTracks):
 #    
 # Plot'numberTracks' tracks from 'tracksCoords'
 #
-# tracksCoords is 3D array: (totalTurns,particles,(x,y,s))
+# tracksCoords is 3D array: (totalTurns,particles,(x,y))
 #
-    print "numberTracks = ",numberTracks
+#    print "numberTracks = ",numberTracks
     trackColor = ['r','b','k','m','g']
     numbPoints = tracksCoords.shape[0]
 #    print "numbPoints = ",numbPoints
     xmax = 1.15*np.max(np.max(abs(tracksCoords[:,0:numberTracks,0])))
     ymax = 1.15*np.max(np.max(abs(tracksCoords[:,0:numberTracks,1])))
-    smax = 1.15*np.max(np.max(tracksCoords[:,0:numberTracks,2]))
 
     turn = np.arange(0,numbPoints)
 # Another way - use gridspec
     fig = plt.figure(figsize=(15,5))
-    gs = gridspec.GridSpec(1, 3, width_ratios=[1,1,1]) 
+    gs = gridspec.GridSpec(1, 2, width_ratios=[1,1]) 
     
     ax0 = plt.subplot(gs[0])
     for prtcl in range(numberTracks):
@@ -121,17 +120,7 @@ def plotTracks(tracksCoords,numberTracks):
     ax1.set_ylabel('Y, mm')
     ax1.grid(True)
        
-    ax2 = plt.subplot(gs[2])
-    for prtcl in range(numberTracks):
-        plt.plot(turn,tracksCoords[0:numbPoints,prtcl,2],'.-',color=trackColor[prtcl])
-##    x2Title = "Y,mm: <> = {:.3f} +- {:.3f}\nY\',mrad: <> = {:.3f} +- {:.3f}".format(meanY,stdY,meanPY,stdPY)
-##    ax2.set_title(x2Title,fontsize='16')
-    ax2.set_ylim([-smax,smax])
-    ax2.set_xlabel('Turn')
-    ax2.set_ylabel('s, m')
-    ax2.grid(True)
-   
-    fig.canvas.set_window_title('Synergia Phase Space Distribution')
+#    fig.canvas.set_window_title('Synergia Phase Space Distribution')
     fig.tight_layout()
     plt.show()
     return
@@ -153,14 +142,13 @@ def tracksCoords(bunchParticles):
 #
     numbPartcls = bunchParticles.shape[0]
     particles = bunchParticles.real
-    trackCoordinates = np.zeros((numbPartcls,3))
+    trackCoordinates = np.zeros((numbPartcls,2))
     for prtcl in range(numbPartcls):
         trackCoordinates[prtcl,0] = 1.e3*particles[prtcl,0]       # x, mm
         trackCoordinates[prtcl,1] = 1.e3*particles[prtcl,2]       # y, mm
-        trackCoordinates[prtcl,2] = particles[prtcl,4]            # s, m
-        if prtcl < 3:
-            print "Particle {}: x = {} mm, y = {} mm, s = {} m". \
-            format(prtcl,trackCoordinates[prtcl,0],trackCoordinates[prtcl,1],trackCoordinates[prtcl,2])
+#        if prtcl < 3:
+#            print "Particle {}: x = {} mm, y = {} mm". \
+#            format(prtcl,trackCoordinates[prtcl,0],trackCoordinates[prtcl,1])
     return trackCoordinates 
     
 # Pickle helper is not necessary but is retained for this example
@@ -209,84 +197,103 @@ class Ramp_actions(synergia.simulation.Propagate_actions, Pickle_helper):
                 element.set_double_attribute("knll", self.multiplier1*old_knll)
                 old_cnll = element.get_double_attribute("cnll")
                 element.set_double_attribute("cnll", self.multiplier2*old_cnll)
-# Output for hecking of variables update:  
+# Output for checking of variables update:  
                 if ((self.outputFlag == 1) and (element.get_name() == "n.11")):
                     print element.get_name(),":  knll=",old_knll,"-->", \
                        self.multiplier1*old_knll, ";  cnll=",old_cnll,"-->",self.multiplier2*old_cnll
         stepper.get_lattice_simulator().update()
-    
-# Routine Simulation Setup
 
+# Main method 'simulation'
+#
+def simulation():        
+#
+# Interactive input of parameters:
+#
+    particlesInBunch = int(raw_input('\nTotal number if particles:')) 
+    totalTurns = int(raw_input('\nTotal number if turns:')) 
+    plotAfterTurns = raw_input('\nPeriodicity (in turns) of plots of distributions (linear structure):')
+    updateAfterTurns = int(raw_input( \
+    '\nPeriodicity (in turns) of changing of parameters \nand distribution plots (nonlinear structure)'))
+    updateOutputFlag = int(raw_input('\nupdateOutputFlag (0 - no, 1 - yes):'))
+    knlMultiplyier = float(raw_input('\nMultiplyier for knl:'))
+    cnllMultiplyier = float(raw_input('\nMultiplyier for cnll:'))
+
+    print "particlesInBunch = ",particlesInBunch
+    print "totalTurns = ",totalTurns
+    print "plotAfterTurns = ",plotAfterTurns
+    print "updateAfterTurns = ",updateAfterTurns
+    print "updateOutputFlag = ",updateOutputFlag
+    print "knlMultiplyier = ",knlMultiplyier
+    print "cnllMultiplyier = ",cnllMultiplyier
+    
 # Lattice:
 
+    fileIOTA = ".../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx"
+    print "\nIOTA Nonlinear lattice: {} \n".format(fileIOTA)
+    lattice = synergia.lattice.MadX_reader().get_lattice("iota", \
+    "../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx")
 
-fileIOTA = ".../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx"
-print "\nIOTA Nonlinear lattice: {} \n".format(fileIOTA)
-lattice = synergia.lattice.MadX_reader().get_lattice("iota", \
-"../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx")
 
-'''
+#    fileIOTA = ".../ioptics/ioptics/lattices/Iota8-4/lattice_8-4_1IO_nll_forTest.madx"
+#    print "\nIOTA Nonlinear lattice: {} \n".format(fileIOTA)
+#    lattice = synergia.lattice.MadX_reader().get_lattice("iota", \
+#    "../ioptics/ioptics/lattices/Iota8-4/lattice_8-4_1IO_nll_forTest.madx")
 
-fileIOTA = ".../ioptics/ioptics/lattices/Iota8-4/lattice_8-4_1IO_nll_forTest.madx"
-print "\nIOTA Nonlinear lattice: {} \n".format(fileIOTA)
-lattice = synergia.lattice.MadX_reader().get_lattice("iota", \
-"../ioptics/ioptics/lattices/Iota8-4/lattice_8-4_1IO_nll_forTest.madx")
-'''
 
 #----------------------------------
 # To recognize attributes of 'lattice':
-# printAttributes(lattice,'lattice','synergia.lattice.MadX_reader().get_lattice')
+#     printAttributes(lattice,'lattice','synergia.lattice.MadX_reader().get_lattice')
 
-# madxAttributes = synergia.lattice.MadX_reader()
+#     madxAttributes = synergia.lattice.MadX_reader()
 # To recognize attributes of 'doubleAttributes':
-# printAttributes(madxAttributes,'madxAttributes','synergia.lattice.MadX_reader()')
+#     printAttributes(madxAttributes,'madxAttributes','synergia.lattice.MadX_reader()')
 
-# doubleVariable = madxAttributes.get_double_variable()
+#     doubleVariable = madxAttributes.get_double_variable()
 # To recognize attributes of 'doubleVariable':
-# printAttributes(doubleVariable,'doubleVariable','madxAttributes.get_double_variablte()')
-# print "doubleVariable = ", doubleVariable
+#     printAttributes(doubleVariable,'doubleVariable','madxAttributes.get_double_variablte()')
+#     print "doubleVariable = ", doubleVariable
 #---------------------------------
-'''
+
+
 # For checking only:
-k = 0
-for elem in lattice.get_elements():
-    if k == 0:
-        printAttributes(elem,'elem','lattice.get_elements')
-    k += 1
-    if elem.get_type() == 'nllens':
-        elem.set_string_attribute("extractor_type", "chef_propagate")
-    else:
-        elem.set_string_attribute("extractor_type", "chef_map")
-    print "elem ({}): name = {}, type = {}, stringAttrbt ={}". \
-          format(k,elem.get_name(),elem.get_type(),elem.get_string_attribute("extractor_type"))
-'''    
+#    k = 0
+#    for elem in lattice.get_elements():
+#        if k == 0:
+#            printAttributes(elem,'elem','lattice.get_elements')
+#       k += 1
+#        if elem.get_type() == 'nllens':
+#            elem.set_string_attribute("extractor_type", "chef_propagate")
+#        else:
+#            elem.set_string_attribute("extractor_type", "chef_map")
+#        print "elem ({}): name = {}, type = {}, stringAttrbt ={}". \
+#              format(k,elem.get_name(),elem.get_type(),elem.get_string_attribute("extractor_type"))
+    
 
 # Original version:
-# attice_simulator = synergia.simulation.Lattice_simulator(lattice, 2)
+#     lattice_simulator = synergia.simulation.Lattice_simulator(lattice, 2)
 # Bunch:
-# bunch = synergia.optics.generate_matched_bunch_transverse(lattice_simulator, 1e-6, \
+#     bunch = synergia.optics.generate_matched_bunch_transverse(lattice_simulator, 1e-6, \
 #                                                          1e-6, 1e-3, 1e-4, 1e9, 10000, seed=1234)
 
 # YuE version:
-stepperCrrnt = synergia.simulation.Independent_stepper_elements(lattice,2,3)
-lattice_simulator_Crrnt = stepperCrrnt.get_lattice_simulator()
+    stepperCrrnt = synergia.simulation.Independent_stepper_elements(lattice,2,3)
+    lattice_simulator_Crrnt = stepperCrrnt.get_lattice_simulator()
 # Bunch:
-bunchInParticles = 100
-bunch_origin = synergia.optics.generate_matched_bunch_transverse(lattice_simulator_Crrnt, 1e-6, \
-                                                          1e-6, 1e-3, 1e-4, 1e9, bunchInParticles, seed=1234)
+    bunch_origin = synergia.optics.generate_matched_bunch_transverse(lattice_simulator_Crrnt, 1e-6, \
+                                                          1e-6, 1e-3, 1e-4, 1e9, particlesInBunch, seed=1234)
 # For checking:
 # To recognize attributes of 'bunch_origin':
-# printAttributes(bunch_origin,'bunch_origin','synergia.optics.generate_matched_bunch_transverse')
-particlesTmp = bunch_origin.get_local_particles()
+#     printAttributes(bunch_origin,'bunch_origin','synergia.optics.generate_matched_bunch_transverse')
+#     particlesTmp = bunch_origin.get_local_particles()
 # To recognize attributes of 'particlesTmp':
-# printAttributes(particlesTmp,'particlesTmp','bunch_origin.get_local_particles')
+#     printAttributes(particlesTmp,'particlesTmp','bunch_origin.get_local_particles')
 # 'particlesCrrnt' is 2D array: (numberoFParticle,(x,x',y,y',s,dE,ID));
-particlesCrrnt = particlesTmp.real
-print "                 particlesCrrnt:"
-for prtcl in range(5):
-    print "x (m) for particle {}: {}".format(prtcl,particlesCrrnt[prtcl,0])
-    print "y (m) for particle {}: {}".format(prtcl,particlesCrrnt[prtcl,2])
-    print "s (m) for particle {}: {}".format(prtcl,particlesCrrnt[prtcl,4])
+#     particlesCrrnt = particlesTmp.real
+#     print "                 particlesCrrnt:"
+#     for prtcl in range(5):
+#         print "x (m) for particle {}: {}".format(prtcl,particlesCrrnt[prtcl,0])
+#         print "y (m) for particle {}: {}".format(prtcl,particlesCrrnt[prtcl,2])
+#         print "s (m) for particle {}: {}".format(prtcl,particlesCrrnt[prtcl,4])
 # End of checking
 
 
@@ -294,205 +301,257 @@ for prtcl in range(5):
 # For checking only:
 #
 # 1) Attributes:
-# printAttributes(bunch,'bunch','synergia.optics.generate_matched_bunch_transverse')
+#     printAttributes(bunch,'bunch','synergia.optics.generate_matched_bunch_transverse')
 # 2) Distributions X-Y, X-X', Y-Y' using method 'pltbunch.plot_bunch':
-loclTitle = "\nThese distributions were constructed using \
-'synergia.optics.generated_matched_bunch_transverse' method:\n"
-print loclTitle
-pltbunch.plot_bunch(bunch_origin)     
+    loclTitle = "\nThese distributions were constructed using \
+    'synergia.optics.generated_matched_bunch_transverse' method:\n"
+    print loclTitle
+    pltbunch.plot_bunch(bunch_origin)     
 # 3) Distributions X-Y, X-X', Y-Y' using method 'plotcoordDistr':
-bunchParticles = bunch_origin.get_local_particles()
+    bunchParticles = bunch_origin.get_local_particles()
 # To recognize attributes of 'bunchParticles':
-# printAttributes(bunchParticles,'bunchParticles', 'bunch.get_local_particles()')
-plotcoordDistr(bunchParticles)
+#     printAttributes(bunchParticles,'bunchParticles', 'bunch.get_local_particles()')
+    plotcoordDistr(bunchParticles)
 #--------------------------------------------------
 
-
 # Steppers (YuE: both case 'splitoperator' and 'independent' work properly!):
-# stepper = 'splitoperator'
-stepper = 'independent'
-if stepper == "splitoperator":
-    # Use the Split operator stepper with a dummy collective operator
-    # (with evenly-spaced steps)
-    no_op = synergia.simulation.Dummy_collective_operator("stub")
-    stepper = synergia.simulation.Split_operator_stepper(
+#     stepper = 'splitoperator'
+    stepper = 'independent'
+    if stepper == "splitoperator":
+# Use the Split operator stepper with a dummy collective operator (with evenly-spaced steps)
+        no_op = synergia.simulation.Dummy_collective_operator("stub")
+        stepper = synergia.simulation.Split_operator_stepper(
                             lattice_simulator_Crrnt, no_op, 4)
-elif stepper == "independent":
-    # Use the Independent particle stepper (by element)
-    stepper = synergia.simulation.Independent_stepper_elements(
+    elif stepper == "independent":
+# Use the Independent particle stepper (by element)
+        stepper = synergia.simulation.Independent_stepper_elements(
                             lattice_simulator_Crrnt, 4)
-else:
-    sys.stderr.write("fodo.py: stepper must be either 'independent' or 'splitoperator'\n")
-    sys.exit(1)
+    else:
+        sys.stderr.write("fodo.py: stepper must be either 'independent' or 'splitoperator'\n")
+        exit(1)
 
 # Bunch simulator:
-bunch_simulator = synergia.simulation.Bunch_simulator(bunch_origin)
+    bunch_simulator = synergia.simulation.Bunch_simulator(bunch_origin)
 
-'''
+
+# This diagnostics does not use!
 # Diagnostics:
-diagnostic_flag = 'None'
-for part in range(0, 0):
-    bunch_simulator.add_per_step(synergia.bunch.Diagnostics_track("step_track_%02d.h5" % part,
-                                                                   part))
-if diagnostic_flag == 'step_full2':
-    bunch_simulator.add_per_step(synergia.bunch.Diagnostics_full2("step_full2.h5"))
-if diagnostic_flag == 'step_particles':
-    bunch_simulator.add_per_step(synergia.bunch.Diagnostics_particles("step_particles.h5"))
-for part in range(0, 0):
-    bunch_simulator.add_per_turn(synergia.bunch.Diagnostics_track("turn_track_%02d.h5" % part,
-                                                                   part))
-if diagnostic_flag == 'turn_full2':
-    bunch_simulator.add_per_turn(synergia.bunch.Diagnostics_full2("turn_full2.h5"))
-if diagnostic_flag == 'turn_particles':
-    bunch_simulator.add_per_turn(synergia.bunch.Diagnostics_particles("turn_particles.h5"))
-'''    
-
-totalTurns = 20
+#    diagnostic_flag = 'None'
+#    for part in range(0, 0):
+#        bunch_simulator.add_per_step(synergia.bunch.Diagnostics_track("step_track_%02d.h5" % part,
+#                                                                   part))
+#    if diagnostic_flag == 'step_full2':
+#        bunch_simulator.add_per_step(synergia.bunch.Diagnostics_full2("step_full2.h5"))
+#    if diagnostic_flag == 'step_particles':
+#        bunch_simulator.add_per_step(synergia.bunch.Diagnostics_particles("step_particles.h5"))
+#    for part in range(0, 0):
+#        bunch_simulator.add_per_turn(synergia.bunch.Diagnostics_track("turn_track_%02d.h5" % part,
+#                                                                   part))
+#    if diagnostic_flag == 'turn_full2':
+#    bunch_simulator.add_per_turn(synergia.bunch.Diagnostics_full2("turn_full2.h5"))
+#    if diagnostic_flag == 'turn_particles':
+#        bunch_simulator.add_per_turn(synergia.bunch.Diagnostics_particles("turn_particles.h5"))
+    
 
 #---------------------------
 # Propagate
 #---------------------------
 # Ramp action is instantiated and passed to the propagator instance during the propagate method
 
+    print "\n-------------------\n"
+    print "           Nonlinear parameters are not changed"
+    print "\n-------------------\n"
+
+    bunch = bunch_origin
+# For checking (to verify that particles from 'bunch_origin' and 'bunch' objects are the same):
+#     particlesTmp1 = bunch.get_local_particles()
+# To recognize attributes of 'particlesTmp1':
+#     printAttributes(particlesTmp1,'particlesTmp1','bunch.get_local_particles')
+#     particlesCrrnt1 = particlesTmp1.real
+#     print "                 particlesCrrnt (again for linear):"
+#     for prtcl in range(5):
+#         print "x (m) for particle {}: {}".format(prtcl,particlesCrrnt1[prtcl,0])
+#         print "y (m) for particle {}: {}".format(prtcl,particlesCrrnt1[prtcl,2])
+#         print "s (m) for particle {}: {}".format(prtcl,particlesCrrnt1[prtcl,4])
+# End of checking (result: particles in both objects are the same!)
+
+    bunch_simulator = synergia.simulation.Bunch_simulator(bunch)
+
+    propagator = synergia.simulation.Propagator(stepper)
+#     propagator.set_checkpoint_period(0)
+#     propagator.set_checkpoint_with_xml(True)
+
+# tracksLinear is 3D array: (totalTurns,bunchParticles,(x,y)) 
+    tracksLinear = np.zeros((totalTurns,particlesInBunch,2))
+
+    nUpdate = 0
+    totalTimeCPU = 0.
+    for turnCrrnt in range(totalTurns):
+        timeStart = os.times() 
+# For checking 
+# particles from 'bunch' object before calculation of propagatorCrrnt:
+#        particlesOrg3b = bunch_origin.get_local_particles()
+# To recognize attributes of 'particlesOrg3b':
+#        printAttributes(particlesOrg3b,'particlesOrg3b','bunch.get_local_particles')
+        propagatorCrrnt = propagator.propagate(bunch_simulator, 1, 1, 0)
+# To recognize attributes of 'propagatorCrrnt':
+#        printAttributes(propagatorCrrnt,'propagatorCrrnt', \
+#                        'propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)')
+# particles from 'bunch' object after calculation of propagatorCrrnt:
+#        particlesOrg3c = bunch_origin.get_local_particles()
+# To recognize attributes of 'particlesOrg3c':
+#        printAttributes(particlesOrg3c,'particlesOrg3c','bunch_origin.get_local_particles')
+# Result of checking: particles from 'bunch_origin' object are CHANGED! Why?
+# Additional checking shows that its are the same as particles fron 'bunch' object after 
+# calculation of propagatorCrrnt
+# End of thecking
+
+# bunchParticles is 2D array: (numberParrticles,(x,x',y,y',s,dE,ID))
+        bunchParticles = bunch.get_local_particles()
+# coordsTracks is 2D array: (bunchParticles,(x,y)) 
+        coordsTracks = tracksCoords(bunchParticles)
+        numbPartcls = bunchParticles.shape[0]
+        for prtcl in range(numbPartcls):
+            for k in range(2):
+                tracksLinear[turnCrrnt,prtcl,k] = coordsTracks[prtcl,k]
+#            if prtcl < 3:
+#                print "tracksLinear (turn {}) for particle {}: x = {} mm, y = {} mm". \
+#                format(turnCrrnt,prtcl,tracksLinear[turnCrrnt,prtcl,0], \
+#                       tracksLinear[turnCrrnt,prtcl,1])
+        turnNumber = turnCrrnt+1
+        timeEnd = os.times()
+        timeOfTurn = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
+        totalTimeCPU += timeOfTurn
+        print ('Turn %3d is completed (CPU time = %6.3f seconds)' % (turnNumber, timeOfTurn))
+        sys.stdout.flush()
+        nUpdate += 1
+        if nUpdate == plotAfterTurns:
+            nUpdate = 0
+            print "\n              After {} turns:\n".format(turnNumber)
+            timeStart = os.times()
+            plotcoordDistr(bunchParticles)
+            timeEnd = os.times()
+            timeOfPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
+            totalTimeCPU += timeOfPlot
+            print ('\nPlotting is completed (CPU time = %6.3f seconds)\n' % timeOfPlot)
+#     for prtcl in range(5):
+#         print "x (mm) for particle {}: {}".format(prtcl,tracksLinear[:,prtcl,0])
+#         print "y (mm) for particle {}: {}".format(prtcl,tracksLinear[:,prtcl,1])
+    plotTracks(tracksLinear,5)
+    print ('\nFor %5d turns CPU time = %6.3f seconds\n' % (totalTurns, totalTimeCPU))
         
-plotAfterEachTurn = 10
+    print "\n-------------------\n"
+    print "           Nonlinear parameters will be CHANGED with values = 5% after each {} turns". \
+          format(updateAfterTurns)
+    print "\n-------------------\n"
 
-print "\n-------------------\n"
-print "           Nonlinear parameters are not changed"
-print "\n-------------------\n"
+# Кe-setting the original 'bunch_origin' object, because it was changed (for some unknown reason) 
+# while pulling a 'bunch' object through a fixed number of turns in a linear structure
+    bunch_origin = synergia.optics.generate_matched_bunch_transverse(lattice_simulator_Crrnt, 1e-6, \
+                                                          1e-6, 1e-3, 1e-4, 1e9, particlesInBunch, seed=1234)
+# For checking (to verify that particles from "old" and "new" 'bunch_origin' objects are the same):
+#     particlesOrg4 = bunch_origin.get_local_particles()
+# To recognize attributes of 'particlesOrg2':
+#     printAttributes(particlesOrg4,'particlesOrg4','bunch_origin.get_local_particles')
+# End of checking (result: particles in both "old" and "new" objects are the same!)
 
-bunch = bunch_origin
+    bunch = bunch_origin
 # For checking:
-particlesTmp1 = bunch.get_local_particles()
-particlesCrrnt1 = particlesTmp1.real
-print "                 particlesCrrnt (again for linear):"
-for prtcl in range(5):
-    print "x (m) for particle {}: {}".format(prtcl,particlesCrrnt1[prtcl,0])
-    print "y (m) for particle {}: {}".format(prtcl,particlesCrrnt1[prtcl,2])
-    print "s (m) for particle {}: {}".format(prtcl,particlesCrrnt1[prtcl,4])
+#     particlesTmp2 = bunch.get_local_particles()
+# To recognize attributes of 'particlesTmp2':
+#     printAttributes(particlesTmp2,'particlesTmp2','bunch.get_local_particles')
+#     particlesCrrnt2 = particlesTmp2.real
+#     print "                 particlesCrrnt (again for nonlinear):"
+#     for prtcl in range(5):
+#         print "x (m) for particle {}: {}".format(prtcl,particlesCrrnt2[prtcl,0])
+#         print "y (m) for particle {}: {}".format(prtcl,particlesCrrnt2[prtcl,2])
 # End of checking
 
-bunch_simulator = synergia.simulation.Bunch_simulator(bunch)
+    bunch_simulator = synergia.simulation.Bunch_simulator(bunch)
 
-propagator = synergia.simulation.Propagator(stepper)
-# propagator.set_checkpoint_period(0)
-# propagator.set_checkpoint_with_xml(True)
+    propagator = synergia.simulation.Propagator(stepper)
+#     propagator.set_checkpoint_period(0)
+#     propagator.set_checkpoint_with_xml(True)
 
+# tracksNonLinear is 3D array: (totalTurns,bunchParticles,(x,y)) 
+    tracksNonLinear = np.zeros((totalTurns,particlesInBunch,2))
 
-# tracksLinear is 3D array: (totalTurns,bunchParticles,(x,y,s)) 
-tracksLinear = np.zeros((totalTurns,bunchInParticles,3))
-
-nUpdate = 0
-totalTimeCPU = 0.
-for turnCrrnt in range(totalTurns):
-    timeStart = os.times()
-    propagatorCrrnt = propagator.propagate(bunch_simulator, 1, 1, 0)
+    nUpdate = 0
+    totalTimeCPU = 0.
+    for turnCrrnt in range(totalTurns):
+        timeStart = os.times()
+        propagatorCrrnt = propagator.propagate(bunch_simulator, 1, 1, 0)
 # To recognize attributes of 'propagatorCrrnt':
-#    printAttributes(propagatorCrrnt,'propagatorCrrnt', \
+#        printAttributes(propagatorCrrnt,'propagatorCrrnt', \
 #                    'propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)')
 # bunchParticles is 2D array: (numberParrticles,(x,x',y,y',s,dE,ID))
-    bunchParticles = bunch.get_local_particles()
-# coordsTracks is 2D array: (bunchParticles,(x,y,s)) 
-    coordsTracks = tracksCoords(bunchParticles)
-    numbPartcls = bunchParticles.shape[0]
-    for prtcl in range(numbPartcls):
-        for k in range(3):
-            tracksLinear[turnCrrnt,prtcl,k] = coordsTracks[prtcl,k]
-        if prtcl < 3:
-            print "tracksLinear (turn {}) for particle {}: x = {} mm, y = {} mm, s = {} m". \
-            format(turnCrrnt,prtcl,tracksLinear[turnCrrnt,prtcl,0], \
-                   tracksLinear[turnCrrnt,prtcl,1],tracksLinear[turnCrrnt,prtcl,2])
-    turnNumber = turnCrrnt+1
-    timeEnd = os.times()
-    timeOfTurn = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
-    totalTimeCPU += timeOfTurn
-    print ('Turn %3d is completed (CPU time = %6.3f seconds)' % (turnNumber, timeOfTurn))
-    sys.stdout.flush()
-    nUpdate += 1
-    if nUpdate == plotAfterEachTurn:
-        nUpdate = 0
-        print "\n              After {} turns:\n".format(turnNumber)
-        timeStart = os.times()
-        plotcoordDistr(bunchParticles)
+        bunchParticles = bunch.get_local_particles()
+# coordsTracks is 2D array: (bunchParticles,(x,y)) 
+        coordsTracks = tracksCoords(bunchParticles)
+        numbPartcls = bunchParticles.shape[0]
+        for prtcl in range(numbPartcls):
+            for k in range(2):
+                tracksNonLinear[turnCrrnt,prtcl,k] = coordsTracks[prtcl,k]
+#            if prtcl < 3:
+#                print "tracksNonLinear (turn {}) for particle {}: x = {} mm, y = {} mm". \
+#                format(turnCrrnt,prtcl,tracksNonLinear[turnCrrnt,prtcl,0], \
+#                       tracksNonLinear[turnCrrnt,prtcl,1])
+        turnNumber = turnCrrnt+1
         timeEnd = os.times()
-        timeOfPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
-        totalTimeCPU += timeOfPlot
-        print ('\nPlotting is completed (CPU time = %6.3f seconds)\n' % timeOfPlot)
-for prtcl in range(5):
-    print "x (mm) for particle {}: {}".format(prtcl,tracksLinear[:,prtcl,0])
-    print "y (mm) for particle {}: {}".format(prtcl,tracksLinear[:,prtcl,1])
-    print "s (m) for particle {}: {}".format(prtcl,tracksLinear[:,prtcl,2])
-plotTracks(tracksLinear,5)
-print ('\nFor %5d turns CPU time = %6.3f seconds\n' % (totalTurns, totalTimeCPU))
+        timeOfTurn = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
+        totalTimeCPU += timeOfTurn
+        print ('Turn %3d is completed (CPU time = %6.3f seconds)' % (turnNumber, timeOfTurn))
+        sys.stdout.flush()
+        nUpdate += 1
+        if nUpdate == updateAfterTurns:
+            nUpdate = 0
+            print "\n              After {} turns:\n".format(turnNumber)
+            timeStart = os.times()
+            plotcoordDistr(bunchParticles)
+# Args of 'Ramp_actions' method are: multiplyers for knl and cnll ant outputFlag         
+            ramp_actions = Ramp_actions(knlMultiplyier,cnllMultiplyier,updateOutputFlag)   
+            propagatorCrrnt = propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)
+            timeEnd = os.times()
+            timeUpdateAndPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
+            totalTimeCPU += timeUpdateAndPlot
+            print ('\nUpdate and plotting are completed (CPU time = %6.3f seconds)\n' % timeUpdateAndPlot)
+#     for prtcl in range(5):
+#         print "x (mm) for particle {}: {}".format(prtcl,tracksNonLinear[:,prtcl,0])
+#         print "y (mm) for particle {}: {}".format(prtcl,tracksNonLinear[:,prtcl,1])
+    plotTracks(tracksNonLinear,5)
+    print ('\nFor %5d turns CPU time = %6.3f seconds\n' % (totalTurns, totalTimeCPU))
+    return
+#
+# End of main method 'simulation'
+
+fileIOTA = ".../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx"
+print "\nIOTA Nonlinear lattice: {} \n".format(fileIOTA)
+lattice = synergia.lattice.MadX_reader().get_lattice("iota", \
+    "../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx")
+
+stepperCrrnt = synergia.simulation.Independent_stepper_elements(lattice,2,3)
+lattice_simulator_Crrnt = stepperCrrnt.get_lattice_simulator()
+# Bunch:
+bunch_origin = synergia.optics.generate_matched_bunch_transverse(lattice_simulator_Crrnt, 1e-6, \
+                                                          1e-6, 1e-3, 1e-4, 1e9, 1000, seed=1234)
+loclTitle = "\nThese distributions were constructed using \
+    'synergia.optics.generated_matched_bunch_transverse' method:\n"
+print loclTitle
+pltbunch.plot_bunch(bunch_origin)     
+# 3) Distributions X-Y, X-X', Y-Y' using method 'plotcoordDistr':
+bunchParticles = bunch_origin.get_local_particles()
+# To recognize attributes of 'bunchParticles':
+#     printAttributes(bunchParticles,'bunchParticles', 'bunch.get_local_particles()')
+plotcoordDistr(bunchParticles)
+
+
+selection = 'loop'
+while selection == 'loop':
+    simulation() 
+    selection = raw_input("\nTo continue the simulation ('yes' or 'no'):")
+    print'Your selection is ',selection
+    if selection == 'yes':
+        selection = 'loop'
+    if selection == 'no':
+        exit(0)
         
-updateAfterEachTurn = 10
-
-print "\n-------------------\n"
-print "           Nonlinear parameters will be CHANGED with values = 5% after each {} turns". \
-format(updateAfterEachTurn)
-print "\n-------------------\n"
-
-bunch = bunch_origin
-# For checking:
-particlesTmp2 = bunch.get_local_particles()
-particlesCrrnt2 = particlesTmp2.real
-print "                 particlesCrrnt (again for nonlinear):"
-for prtcl in range(5):
-    print "x (m) for particle {}: {}".format(prtcl,particlesCrrnt2[prtcl,0])
-    print "y (m) for particle {}: {}".format(prtcl,particlesCrrnt2[prtcl,2])
-    print "s (m) for particle {}: {}".format(prtcl,particlesCrrnt2[prtcl,4])
-# End of checking
-
-bunch_simulator = synergia.simulation.Bunch_simulator(bunch)
-
-propagator = synergia.simulation.Propagator(stepper)
-# propagator.set_checkpoint_period(0)
-# propagator.set_checkpoint_with_xml(True)
-
-# tracksNonLinear is 3D array: (totalTurns,bunchParticles,(x,y,s)) 
-tracksNonLinear = np.zeros((totalTurns,bunchInParticles,3))
-
-nUpdate = 0
-totalTimeCPU = 0.
-for turnCrrnt in range(totalTurns):
-    timeStart = os.times()
-    propagatorCrrnt = propagator.propagate(bunch_simulator, 1, 1, 0)
-# To recognize attributes of 'propagatorCrrnt':
-#    printAttributes(propagatorCrrnt,'propagatorCrrnt', \
-#                    'propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)')
-# bunchParticles is 2D array: (numberParrticles,(x,x',y,y',s,dE,ID))
-    bunchParticles = bunch.get_local_particles()
-# coordsTracks is 2D array: (bunchParticles,(x,y,s)) 
-    coordsTracks = tracksCoords(bunchParticles)
-    numbPartcls = bunchParticles.shape[0]
-    for prtcl in range(numbPartcls):
-        for k in range(3):
-            tracksNonLinear[turnCrrnt,prtcl,k] = coordsTracks[prtcl,k]
-        if prtcl < 3:
-            print "tracksNonLinear (turn {}) for particle {}: x = {} mm, y = {} mm, s = {} m". \
-            format(turnCrrnt,prtcl,tracksNonLinear[turnCrrnt,prtcl,0], \
-                   tracksNonLinear[turnCrrnt,prtcl,1],tracksNonLinear[turnCrrnt,prtcl,2])
-    turnNumber = turnCrrnt+1
-    timeEnd = os.times()
-    timeOfTurn = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
-    totalTimeCPU += timeOfTurn
-    print ('Turn %3d is completed (CPU time = %6.3f seconds)' % (turnNumber, timeOfTurn))
-    sys.stdout.flush()
-    nUpdate += 1
-    if nUpdate == updateAfterEachTurn:
-        nUpdate = 0
-        print "\n              After {} turns:\n".format(turnNumber)
-        timeStart = os.times()
-        plotcoordDistr(bunchParticles)
-        ramp_actions = Ramp_actions(1.05,.95,1)   
-        propagatorCrrnt = propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)
-        timeEnd = os.times()
-        timeUpdateAndPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
-        totalTimeCPU += timeUpdateAndPlot
-        print ('\nUpdate and plotting are completed (CPU time = %6.3f seconds)\n' % timeUpdateAndPlot)
-for prtcl in range(5):
-    print "x (mm) for particle {}: {}".format(prtcl,tracksNonLinear[:,prtcl,0])
-    print "y (mm) for particle {}: {}".format(prtcl,tracksNonLinear[:,prtcl,1])
-    print "s (m) for particle {}: {}".format(prtcl,tracksNonLinear[:,prtcl,2])
-plotTracks(tracksNonLinear,5)
-print ('\nFor %5d turns CPU time = %6.3f seconds\n' % (totalTurns, totalTimeCPU))
