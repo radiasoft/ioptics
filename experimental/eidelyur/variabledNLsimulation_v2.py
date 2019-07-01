@@ -180,16 +180,15 @@ class Pickle_helper:
 
 class Ramp_actions(synergia.simulation.Propagate_actions, Pickle_helper):
 # The arguments to __init__ are what the Ramp_actions instance is initialized with
-    def __init__(self, multiplier1,multiplier2, outputFlag):
+    def __init__(self, multiplier, outputFlag):
         selfObject = synergia.simulation.Propagate_actions.__init__(self)
 # To recognize attributes of 'selfObject':
 #        printAttributes(selfObject,'selfObject','synergia.simulation.Propagate_actions.__init__(self)')
 
 # Pickling the arguments to the initializer allows the module to resume
 # after checkpointing. They should be in the same order as the arguments to __init__.
-        Pickle_helper.__init__(self, multiplier1, multiplier2, outputFlag)
-        self.multiplier1 = multiplier1
-        self.multiplier2 = multiplier2
+        Pickle_helper.__init__(self, multiplier, outputFlag)
+        self.multiplier = multiplier
         self.outputFlag = outputFlag
     def turn_end_action(self, stepper, bunch, turn_num):
 #---------------------------
@@ -205,13 +204,10 @@ class Ramp_actions(synergia.simulation.Propagate_actions, Pickle_helper):
         for element in stepper.get_lattice_simulator().get_lattice().get_elements():
             if element.get_type() == "nllens":
                 old_knll = element.get_double_attribute("knll")
-                element.set_double_attribute("knll", self.multiplier1*old_knll)
-                old_cnll = element.get_double_attribute("cnll")
-                element.set_double_attribute("cnll", self.multiplier2*old_cnll)
+                element.set_double_attribute("knll", self.multiplier*old_knll)
 # Output for checking of variables update checking nonlinear lens 'n.11' only:  
                 if ((self.outputFlag == 1) and (element.get_name() == "n.11")):
-                    print element.get_name(),":  knll=",old_knll,"-->", \
-                       self.multiplier1*old_knll, ";  cnll=",old_cnll,"-->",self.multiplier2*old_cnll
+                    print element.get_name(),":  knll=",old_knll,"-->",self.multiplier*old_knll
         stepper.get_lattice_simulator().update()
 
 def lawsMagnification(mgnfctnFctr,steps):
@@ -273,11 +269,10 @@ def lawsMagnification(mgnfctnFctr,steps):
 
     fig.tight_layout()
     plt.show()
-    selection = int(raw_input("\nYour selection of the law \
-    \n(1 - linearm 2 - parabolic, 3 - smooth sign-function; -1 - exit):"))
+    selection = int(raw_input("\nYour selection of the law magnification \
+    \n(1 - linear, 2 - parabolic, 3 - smooth sign-function; -1 - exit): "))
     return selection
-  
- 
+   
 # Main method 'simulation'
 #
 def simulation():        
@@ -292,41 +287,66 @@ def simulation():
     if totalTurns == -1:
         return
 
-    plotAfterTurns = int(raw_input( \
-    '\nPeriodicity (in turns) of plots of distributions \n(linear structure; = -1 to interrupt simulation):'))
-    if plotAfterTurns == -1:
-        return
-
     updateAfterTurns = int(raw_input( \
     '\nPeriodicity (in turns) of changing of parameters and distribution plots \n(nonlinear structure; = -1 to interrupt simulation)'))
     if updateAfterTurns == -1:
         return
     stepsInMgnfctn = int(totalTurns/updateAfterTurns)+1
-    print "steps in magnification: ",stepsInMgnfctn
+    print "steps for magnification: ",stepsInMgnfctn
 
     updateOutputFlag = int(raw_input('\nupdateOutputFlag (0 - no, 1 - yes, -1  - to interrupt simulation):'))
     if updateOutputFlag == -1:
         return
 
-    strengthLensFactor = float(raw_input( \
-    "\nRelative magnification RF of the strength 't' of nonlinear lens \n (RF = t_final/t_initial; -1  - to interrupt simulation):"))
-    if strengthLensFactor == -1:
+    mgnfctnFctr = float(raw_input( \
+    "\nRelative magnification (RF) of the strength 't' of nonlinear lens \n (RF = t_final/t_initial; -1.  - to interrupt simulation):"))
+    if mgnfctnFctr == -1.:
         return
     else: 
-        law = lawsMagnification(strengthLensFactor,stepsInMgnfctn)
+        law = lawsMagnification(mgnfctnFctr,stepsInMgnfctn)
         print 'Your selection of law magnification: ', law
     if law == -1:
         return
 
     print "     Parameters: \nparticlesInBunch = ",particlesInBunch
     print "totalTurns = ",totalTurns
-    print "plotAfterTurns = ",plotAfterTurns
     print "updateAfterTurns = ",updateAfterTurns
-    print "strengthLensFactor = ",strengthLensFactor
+    print "Relative magnification (RF) = ",mgnfctnFctr
     laws = ['linear', 'parabolic', 'smooth sign-function']
     print "Law of magnification: ",laws[law-1]
-
-
+    print "steps in magnification: ",stepsInMgnfctn
+ 
+    strengthLens = np.zeros(stepsInMgnfctn)
+    magnifications = np.zeros(stepsInMgnfctn)
+    for n in range(stepsInMgnfctn):
+        if law == 1:
+# 1) Linear: for step number n
+#           t(n) = t_0 + (t_f-t_0)*n/(N-1) for n = 0,1,...,N-1 .
+            strengthLens[n] = 1.+n*(mgnfctnFctr-1.)/(stepsInMgnfctn-1)
+        elif law == 2:
+# 2) Parabolic: for step number n
+#           t(n) = t_0 + (t_f-t_0)*n^2/(N-1)^2 for n = 0,1,...,N-1 .
+            strengthLens[n] = 1.+n**2*(mgnfctnFctr-1.)/(stepsInMgnfctn-1)**2
+        elif law == 3:
+# 3) Smooth sign-function: for step number n
+#           t(n) = .5*(t_0+t_f) + .5*(t_f-t_0)*tanh(x(n)), where
+#           x(n) = (6*n-3*(N-1))/(N-1) for n=0,1,...,N-1 .
+# In this approach x(0) = -3., x(N-1) = 3.; so, tanh(3.) = - tanh(-3.) = .9951
+            x = (6.*n-3.*(stepsInMgnfctn-1))/(stepsInMgnfctn-1)
+            strengthLens[n] = .5*(1.+mgnfctnFctr)+.5*(mgnfctnFctr-1.)*np.tanh(x)
+# For checking:
+#    for n in range(stepsInMgnfctn):
+#        print "strengthLens[{}] = {}".format(n,strengthLens[n])
+    totalMgnfcn = 1.
+    for n in range(stepsInMgnfctn):
+        if n == 0:
+            magnifications[n] = strengthLens[n]
+        else:
+            magnifications[n] = strengthLens[n]/strengthLens[n-1]
+#        print "magnifications[{}] = {}".format(n,magnifications[n])
+        totalMgnfcn *= magnifications[n]
+    print "Total relative magnification (RF) will be = ",totalMgnfcn
+    
 # Lattice:
 
     fileIOTA = ".../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx"
@@ -459,92 +479,6 @@ def simulation():
 #---------------------------
 # Ramp action is instantiated and passed to the propagator instance during the propagate method
 
-#=========== Case without changing of the parameters of the nonlinear lens ================
-#== 
-#==     print "\n-------------------\n"
-#==     print "           Nonlinear parameters are not changed"
-#==     print "\n-------------------\n"
-#== 
-#==     bunch = bunch_origin
-#== # For checking (to verify that particles from 'bunch_origin' and 'bunch' objects are the same):
-#== #     particlesTmp1 = bunch.get_local_particles()
-#== # To recognize attributes of 'particlesTmp1':
-#== #     printAttributes(particlesTmp1,'particlesTmp1','bunch.get_local_particles')
-#== #     particlesCrrnt1 = particlesTmp1.real
-#== #     print "                 particlesCrrnt (again for linear):"
-#== #     for prtcl in range(5):
-#== #         print "x (m) for particle {}: {}".format(prtcl,particlesCrrnt1[prtcl,0])
-#== #         print "y (m) for particle {}: {}".format(prtcl,particlesCrrnt1[prtcl,2])
-#== #         print "s (m) for particle {}: {}".format(prtcl,particlesCrrnt1[prtcl,4])
-#== # End of checking (result: particles in both objects are the same!)
-#== 
-#==     bunch_simulator = synergia.simulation.Bunch_simulator(bunch)
-#== 
-#==     propagator = synergia.simulation.Propagator(stepper)
-#== #     propagator.set_checkpoint_period(0)
-#== #     propagator.set_checkpoint_with_xml(True)
-#== 
-#== # tracksLinear is 3D array: (totalTurns,bunchParticles,(x,y)) 
-#==     tracksLinear = np.zeros((totalTurns,particlesInBunch,2))
-#== 
-#==     nUpdate = 0
-#==     totalTimeCPU = 0.
-#==     for turnCrrnt in range(totalTurns):
-#== # For checking 
-#== # particles from 'bunch' object before calculation of propagatorCrrnt:
-#== #        particlesOrg3b = bunch_origin.get_local_particles()
-#== # To recognize attributes of 'particlesOrg3b':
-#== #        printAttributes(particlesOrg3b,'particlesOrg3b','bunch.get_local_particles')
-#==         propagatorCrrnt = propagator.propagate(bunch_simulator, 1, 1, 0)
-#== # To recognize attributes of 'propagatorCrrnt':
-#==         timeStart = os.times() 
-#== #        printAttributes(propagatorCrrnt,'propagatorCrrnt', \
-#== #                        'propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)')
-#== # particles from 'bunch' object after calculation of propagatorCrrnt:
-#== #        particlesOrg3c = bunch_origin.get_local_particles()
-#== # To recognize attributes of 'particlesOrg3c':
-#== #        printAttributes(particlesOrg3c,'particlesOrg3c','bunch_origin.get_local_particles')
-#== # Result of checking: particles from 'bunch_origin' object are CHANGED! Why?
-#== # Additional checking shows that its are the same as particles fron 'bunch' object after 
-#== # calculation of propagatorCrrnt
-#== # End of thecking
-#== 
-#== # bunchParticles is 2D array: (numberParrticles,(x,x',y,y',s,dE,ID))
-#==         bunchParticles = bunch.get_local_particles()
-#== # coordsTracks is 2D array: (bunchParticles,(x,y)) 
-#==         coordsTracks = tracksCoords(bunchParticles)
-#==         numbPartcls = bunchParticles.shape[0]
-#==         for prtcl in range(numbPartcls):
-#==             for k in range(2):
-#==                 tracksLinear[turnCrrnt,prtcl,k] = coordsTracks[prtcl,k]
-#== #            if prtcl < 3:
-#== #                print "tracksLinear (turn {}) for particle {}: x = {} mm, y = {} mm". \
-#== #                format(turnCrrnt,prtcl,tracksLinear[turnCrrnt,prtcl,0], \
-#== #                       tracksLinear[turnCrrnt,prtcl,1])
-#==         turnNumber = turnCrrnt+1
-#==         timeEnd = os.times()
-#==         timeOfTurn = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
-#==         totalTimeCPU += timeOfTurn
-#==         print ('Turn %3d is completed (CPU time = %6.3f seconds)' % (turnNumber, timeOfTurn))
-#==         sys.stdout.flush()
-#==         nUpdate += 1
-#==         if nUpdate == plotAfterTurns:
-#==             nUpdate = 0
-#==             print "\n              After {} turns:\n".format(turnNumber)
-#==             timeStart = os.times()
-#==             plotcoordDistr(bunchParticles)
-#==             timeEnd = os.times()
-#==             timeOfPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
-#==             totalTimeCPU += timeOfPlot
-#==             print ('\nPlotting is completed (CPU time = %6.3f seconds)\n' % timeOfPlot)
-#== #     for prtcl in range(5):
-#== #         print "x (mm) for particle {}: {}".format(prtcl,tracksLinear[:,prtcl,0])
-#== #         print "y (mm) for particle {}: {}".format(prtcl,tracksLinear[:,prtcl,1])
-#==     plotTracks(tracksLinear,5)
-#==     print ('\nFor %5d turns CPU time = %6.3f seconds\n' % (totalTurns, totalTimeCPU))
-#==
-#============  End of case without changing of the parameters of the nonlinear lens ================
-
     print "\n-------------------\n"
     print "           Nonlinear parameters will be CHANGED after each {} turns".format(updateAfterTurns)
     print "\n-------------------\n"
@@ -581,6 +515,7 @@ def simulation():
     tracksNonLinear = np.zeros((totalTurns,particlesInBunch,2))
 
     nUpdate = 0
+    stepOfMgnfcn = 0
     totalTimeCPU = 0.
     for turnCrrnt in range(totalTurns):
         timeStart = os.times()
@@ -608,24 +543,28 @@ def simulation():
         sys.stdout.flush()
         nUpdate += 1
         if nUpdate == updateAfterTurns:
-            nUpdate = 0
-            print "\n              After {} turns:\n".format(turnNumber)
             timeStart = os.times()
             plotcoordDistr(bunchParticles)
+#== #
+#== # Possibility to redefine parameters inside simulation:
+#== #
+#==             if updateInsideSmlnFlag == 1:
+#==                 print "Old multiplyier for knl = {}".format(knlMultiplier)
+#== # Multiplier 'knlMultiplier' is the same for all nonlinear lenses:   
+#==                 knlMultiplier = float(raw_input('\nNew multiplyier for knl:'))
+#==                 print "Old multiplyier for cnll = {}".format(cnllMultiplier)
+#== # Multiplier 'cnllMultiplier' is the same for all nonlinear lenses:   
+#==                 cnllMultiplier = float(raw_input('\nNew multiplyier for cnll:'))
+
 #
-# Possibility to redefine parameters inside simulation:
+# Args of 'Ramp_actions' method are: multiplier for knl and outputFlag 
 #
-            if updateInsideSmlnFlag == 1:
-                print "Old multiplyier for knl = {}".format(knlMultiplier)
-# Multiplier 'knlMultiplier' is the same for all nonlinear lenses:   
-                knlMultiplier = float(raw_input('\nNew multiplyier for knl:'))
-                print "Old multiplyier for cnll = {}".format(cnllMultiplier)
-# Multiplier 'cnllMultiplier' is the same for all nonlinear lenses:   
-                cnllMultiplier = float(raw_input('\nNew multiplyier for cnll:'))
-#
-# Args of 'Ramp_actions' method are: multipliers for knl and cnll and outputFlag 
-#
-            ramp_actions = Ramp_actions(knlMultiplier,cnllMultiplier,updateOutputFlag)   
+            stepOfMgnfcn += 1
+            knlMultiplier = magnifications[stepOfMgnfcn]
+            print "strengthLens[",stepOfMgnfcn,"] = ",strengthLens[stepOfMgnfcn]
+            nUpdate = 0
+            print "\n              After {} turns:\n".format(turnNumber)
+            ramp_actions = Ramp_actions(knlMultiplier, updateOutputFlag)   
             propagatorCrrnt = propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)
             timeEnd = os.times()
             timeUpdateAndPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
@@ -654,11 +593,10 @@ bunch_origin = synergia.optics.generate_matched_bunch_transverse(lattice_simulat
 # To compare two methods for drawing of the particles distributions:
 #
 loclTitle = "\nThese distributions were constructed using \
-'synergia.optics.generated_matched_bunch_transverse' method:"
+'synergia.optics.generated_matched_bunch_transverse' method"
 loclTitle = loclTitle + \
-"\n and plotted using two methods: 'pltbunch.plot_bunch' from the code synergia and 'plotcoordDistr' \
- from this scrit "
-loclTitle = loclTitle + "(to verify method 'plotcoordDistr')."
+"\nand plotted using two methods - 'pltbunch.plot_bunch' from the code synergia \nand 'plotcoordDistr' \
+from this script (to verify method 'plotcoordDistr'):"
 print loclTitle
 pltbunch.plot_bunch(bunch_origin)     
 # Distributions X-Y, X-X', Y-Y' using method 'plotcoordDistr':
