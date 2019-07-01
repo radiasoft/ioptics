@@ -3,7 +3,37 @@
 # and 'variabledNLsimulation_v0.py' (Yury)
 #
 #    Started at June 13, 2019
+#    Finished at June 28, 2019
 #
+# To change the parameters of the nonlinear lens the following law was used:
+# after each selected number of turns the strengths 'knl' of all lens and
+# its aperture parasmeters 'cnll' were multiplied on 'multiplier1' and
+# multiplier2' correspondingly. The multipliers are the same for all sets of lens.
+# Changing of parameters is realized by method 'turn_end_action' from class 'Ramp_actions'.
+# The possibility to change these multipliers "in-fly" (inside of simulation after 
+# some selected turns) is implemented
+#
+# The script includes simulation of the beam behaviour in the linear structure of the ring
+# firstly with changeless parameters of nonlinear elements (lattice 
+# '.../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx'; for verifying of the
+#  approach) and then increasing of the parameters 'knl' and 'cnll' using "power law": 
+# after n steps
+#                new_value_of _parameter = initial_value_of_parameter * multiplier^n .
+#
+# Some useful methods are developed in the script:
+# plotcoordDistr(bunchParticles) is an analogue of method pltbunch.plot_bunch(bunch_origin),
+#                                but more convenient to the aims of the script;
+# plotTracks(tracksCoords,numberTracks) draws the x- and y-tracks for first 5 particles 
+#                                       of the bunch (to verify the simulation);
+# printAttributes(object,name,title) allows to recognize the structure of the parameters and
+#                                    methods of the 'object';
+# tracksCoords(bunchParticles) forms an 2D-array of the all particles tracks for
+#                              object 'bunch';
+# Ramp_actions(synergia.simulation.Propagate_actions, Pickle_helper) builds them method
+# 'turn_end_action', which allows to increase the current values of the parameters 'knl' 
+# and 'cnll' with multipliers 'multiplier1' and 'multiplier2' correspondingly.
+#
+
 import synergia
 import os, sys
 import inspect
@@ -577,7 +607,6 @@ bunchParticles = bunch_origin.get_local_particles()
 #     printAttributes(bunchParticles,'bunchParticles', 'bunch.get_local_particles()')
 plotcoordDistr(bunchParticles)
 
-
 selection = 'loop'
 while selection == 'loop':
     simulation() 
@@ -587,4 +616,3 @@ while selection == 'loop':
         selection = 'loop'
 #    if selection == 'no':
 #        exit(0)
-        
