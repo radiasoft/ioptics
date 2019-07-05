@@ -162,6 +162,79 @@ def tracksCoords(bunchParticles):
 #            format(prtcl,trackCoordinates[prtcl,0],trackCoordinates[prtcl,1])
     return trackCoordinates 
     
+class NonlinearInsertion(object):
+  
+    # Generation of the nonlinear lenses as set of segments of the nonlinear insertion
+    #
+    # Source: 
+    #   1) Nonlinear Accelerator Lattices with One and Two Analytic Invariants.
+    #      V. Danilov and S. Nagaitsev. Phys. Rev. ST Accel. Beams 13, 084002 (2010);
+    #      https://journals.aps.org/prab/pdf/10.1103/PhysRevSTAB.13.084002.  
+    #   2) Complex Representation of Potentials and Fields for the Nonlinear 
+    #      Magnetic Insert of the Integrable Optics Test Accelerator.
+    #      Chad Mitchell. March 2017; https://esholarship.org/uc/item/7dt4t236.
+    #
+    # Input attributes:
+    #   length:     the length of the nonlinear inserttion (float, m);
+    #   phase:      the phase advance modulo 2pi through the nonlinear insertion (float, rad);
+    #   t:          the strength parameter for the central segment of nonlinear insertion 
+    #               (float, dimensionless, defaults to 0.1);
+    #   c:          the nonlinear aperture parameter 
+    #               (float, m^1/2; is defined by poles in the x-axis, defaults to 0.01);
+    #   num_lens:   the number of lonlinear lenses as  an parts of the nonlinear insertion 
+    #               (int, defaults to 18).
+    #   
+    # Output attributes:
+    #   s_vals (ndArray): coordinates of the center of each nonlinear lens (float ndArray, m);
+    #   knll (ndArray):   "strength" of each nonlinear lens (float ndArray, m);
+    #   cnll (ndArray):   aperture parameters for each nonlinear lens (float ndArray, m^1/2).
+    #   
+    def __init__(self, length, phase, t = 0.1, c = 0.01, num_lens = 18):
+        print "Input data:\nlength = ",length,", phase = ",phase,", t = ",t,", c = ",c,", num_lens = ",num_lens
+        self.length = length
+        self.phase = phase
+        self.t = t
+        self._c = c
+        self.num_lens = num_lens
+    # Aperture parameter c must be positive:
+    @property
+    def c(self):
+        return self._c
+    @c.setter
+    def c(self, cval):
+        if cval < 0:
+            raise ValueError("Aperture parameter c must be positive")     
+        self._c = c
+
+    def generate_lens(self):
+#
+# This method generates the parameters of the nonlinear lens in according with 
+# parameters 'length', 'phase', 't', 'c', and 'num_lens' of the nonlinear insertion.
+#
+# Attention: parameters 't'and 'c' refer to the middle of onsertion!!!
+#
+    # Focal length f0 of the insertion (m):
+        f0 = self.length/4.0*(1.0+1.0/np.tan(np.pi*self.phase)**2)
+        print "f0 = ",f0
+    # Coordinates s_vals of the center of each nonlinear lens (m):
+        first_lens = .5*(self.length/self.num_lens)
+        last_lens = self.length - first_lens
+        s_vals = np.linspace(first_lens,last_lens,self.num_lens) 
+        self.s_vals = s_vals
+        
+    # Set the beta-functions (m):
+        beta_n = self.length*(1.-s_vals*(self.length-s_vals)/self.length/f0)/np.sqrt(1.0-(1.0-self.length/2.0/f0)**2)
+#        self.betas = beta_n
+        
+        cnll = self.c*np.sqrt(beta_n)
+        self.cnll = cnll
+
+        knn = self.t*self.length/self.num_lens/beta_n**2
+        knll = knn*cnll**2
+        self.knll = knll
+
+        return self
+        
 # Pickle helper is not necessary but is retained for this example
 class Pickle_helper:
     __getstate_manages_dict__ = 1
@@ -174,21 +247,22 @@ class Pickle_helper:
     def __setstate__(self, state):
         self.__dict__ = state
         
-# Derived class to ramp quadrupoles
+# Derived class to ramp nonlinear lens
 
 # Will be passed into propagator and called at each appropriate 'interval' (step, turn, action, etc...)
 
 class Ramp_actions(synergia.simulation.Propagate_actions, Pickle_helper):
 # The arguments to __init__ are what the Ramp_actions instance is initialized with
-    def __init__(self, multiplier, outputFlag):
+    def __init__(self, knll_crrnt, type, outputFlag):
         selfObject = synergia.simulation.Propagate_actions.__init__(self)
 # To recognize attributes of 'selfObject':
 #        printAttributes(selfObject,'selfObject','synergia.simulation.Propagate_actions.__init__(self)')
 
 # Pickling the arguments to the initializer allows the module to resume
 # after checkpointing. They should be in the same order as the arguments to __init__.
-        Pickle_helper.__init__(self, multiplier, outputFlag)
-        self.multiplier = multiplier
+        Pickle_helper.__init__(self, knll_crrnt, type, outputFlag)
+        self.knll_crrnt = knll_crrnt
+        self.type = type
         self.outputFlag = outputFlag
     def turn_end_action(self, stepper, bunch, turn_num):
 #---------------------------
@@ -200,36 +274,51 @@ class Ramp_actions(synergia.simulation.Propagate_actions, Pickle_helper):
 #---------------------------
 # Output title for checking of variables update:   
         if self.outputFlag == 1:
-            print "Modifying lattice:"
-        for element in stepper.get_lattice_simulator().get_lattice().get_elements():
-            if element.get_type() == "nllens":
-                old_knll = element.get_double_attribute("knll")
-                element.set_double_attribute("knll", self.multiplier*old_knll)
+            print "Modifying lattice: self.knll_crrnt = ",self.knll_crrnt
+        if self.type == 1:
+            self.multiplier = self.knll_crrnt
+            for element in stepper.get_lattice_simulator().get_lattice().get_elements():
+# To recognize attributes of 'element':
+#                printAttributes(element,'element', \
+#                                    'stepper.get_lattice_simulator().get_lattice().get_elements()')
+                nameElem = element.get_name()
+                print "nameElem = ",nameElem
+                if element.get_type() == "nllens":
+                    old_knll = element.get_double_attribute("knll")
+                    new_knll = self.multiplier*old_knll
+                    element.set_double_attribute("knll", new_knll)
 # Output for checking of variables update checking nonlinear lens 'n.11' only:  
                 if ((self.outputFlag == 1) and (element.get_name() == "n.11")):
-                    print element.get_name(),":  knll=",old_knll,"-->",self.multiplier*old_knll
+                    print element.get_name(),":  knll=",old_knll," --> ",new_knll, \
+                            " multplier = ",self.multiplier   
+        if self.type == 2:
+            print "self.type = ",self.type                   
         stepper.get_lattice_simulator().update()
 
-def lawsMagnification(mgnfctnFctr,steps):
+def lawsMagnification(t_i,t_f,steps):
 
+# For relative magnification: t_i = 1., t_f = magnification: 
+#
+# Three laws of magnification are in use
+#
 # 1) Linear: for step number n
-#           t(n) = t_0 + (t_f-t_0)*n/(N-1) for n = 0,1,...,N-1 .
+#       t(n) = t_i + (t_f-t_i)*n/(N-1) for n = 0,1,...,N-1 .
     tLin = np.zeros(steps)
     for n in range(steps):
-        tLin[n] = 1.+n*(mgnfctnFctr-1.)/(steps-1)
+        tLin[n] = t_i+n*(t_f-t_i)/(steps-1)
 # 2) Parabolic: for step number n
-#           t(n) = t_0 + (t_f-t_0)*n^2/(N-1)^2 for n = 0,1,...,N-1 .
+#            t(n) = t_i + (t_f-t_i)*n^2/(N-1)^2 for n = 0,1,...,N-1 .
     tPar= np.zeros(steps)
     for n in range(steps):
-        tPar[n] = 1.+n**2*(mgnfctnFctr-1.)/(steps-1)**2
+        tPar[n] = t_i+n**2*(t_f-t_i)/(steps-1)**2
 # 3) Smooth sign-function: for step number n
-#           t(n) = .5*(t_0+t_f) + .5*(t_f-t_0)*tanh(x(n)), where
+#           t(n) = .5*(t_f+t_i) + .5*(t_f-t_i)*tanh(x(n)), where
 #           x(n) = (6*n-3*(N-1))/(N-1) for n=0,1,...,N-1 .
 # In this approach x(0) = -3., x(N-1) = 3.; so, tanh(3.) = - tanh(-3.) = .9951
     tSSF= np.zeros(steps)
     for n in range(steps):
         x = (6.*n-3.*(steps-1))/(steps-1)
-        tSSF[n] = .5*(1.+mgnfctnFctr)+.5*(mgnfctnFctr-1.)*np.tanh(x)
+        tSSF[n] = .5*(t_f+t_i)+.5*(t_f-t_i)*np.tanh(x)
 # Plotting all cases:
     step = range(steps)
     tMin = .975*min(tLin)
@@ -269,15 +358,23 @@ def lawsMagnification(mgnfctnFctr,steps):
 
     fig.tight_layout()
     plt.show()
+
     selection = int(raw_input("\nYour selection of the law magnification \
     \n(1 - linear, 2 - parabolic, 3 - smooth sign-function; -1 - exit): "))
     return selection
+        
    
 # Main method 'simulation'
 #
-def simulation():        
+def simulation():
 #
-# Interactive input of parameters:
+# Main parameters of the nonlinear insertion:
+    insrtn_l0 = 1.8      # total length, m
+    insrtn_mu0 = .3      # phase, rad (/2pi)
+    insrtn_c = .01       # aperture factor,  m^(1/2)
+    num_lens = 18        # number of lens inside insertion
+#
+# Interactive input of the parameters for simulation:
 #
     particlesInBunch = int(raw_input('\nTotal number if particles (= -1 to interrupt simulation):')) 
     if particlesInBunch == -1:
@@ -294,59 +391,103 @@ def simulation():
     stepsInMgnfctn = int(totalTurns/updateAfterTurns)+1
     print "steps for magnification: ",stepsInMgnfctn
 
-    updateOutputFlag = int(raw_input('\nupdateOutputFlag (0 - no, 1 - yes, -1  - to interrupt simulation):'))
+    updateOutputFlag = int(raw_input('\nupdateOutputFlag (0 - no, 1 - yes, -1 - to interrupt simulation):'))
     if updateOutputFlag == -1:
         return
 
-    mgnfctnFctr = float(raw_input( \
-    "\nRelative magnification (RF) of the strength 't' of nonlinear lens \n (RF = t_final/t_initial; -1.  - to interrupt simulation):"))
-    if mgnfctnFctr == -1.:
+    magnificationType = int(raw_input('\nMagnification type \n(1 - relative, 2 - absolute, 0 - to interrupt simulation):'))
+    if magnificationType == 0:
         return
-    else: 
-        law = lawsMagnification(mgnfctnFctr,stepsInMgnfctn)
-        print 'Your selection of law magnification: ', law
+    else:
+        if magnificationType == 1:
+            mgnfctnFctr = float(raw_input( \
+    "\nRelative magnification (RM) of the strength 't' of all (!) nonlinear lenses \n (RM = t_f/t_i; -1. - to interrupt simulation):"))
+            if mgnfctnFctr == -1.:
+                return
+            else: 
+                t_i = 1.
+                t_f = mgnfctnFctr
+        else:
+            t_i = float(raw_input( \
+    "\nInitial value 't_i' of the strength of the central (!) nonlinear lens \n (-1.- to interrupt simulation):"))
+            if t_i == -1.:
+                return
+            t_f = float(raw_input( \
+    "\nFinal value 't_f' of the strength of nonlinear lens \n (-1.- to interrupt simulation):"))
+            if t_f == -1.:
+                return
+    law = lawsMagnification(t_i,t_f,stepsInMgnfctn)
+    print 'Your selection of law magnification: ', law
     if law == -1:
         return
 
     print "     Parameters: \nparticlesInBunch = ",particlesInBunch
     print "totalTurns = ",totalTurns
     print "updateAfterTurns = ",updateAfterTurns
-    print "Relative magnification (RF) = ",mgnfctnFctr
+    print "magnificationType = ",magnificationType
+    print "Relative magnification (RM) = ",mgnfctnFctr
+    print "For absolute magnification t_i = ",t_i
+    print "For absolute magnification t_f = ",t_f
     laws = ['linear', 'parabolic', 'smooth sign-function']
     print "Law of magnification: ",laws[law-1]
     print "steps in magnification: ",stepsInMgnfctn
- 
-    strengthLens = np.zeros(stepsInMgnfctn)
-    magnifications = np.zeros(stepsInMgnfctn)
+#
+# For relative type of maginfication (magnificationType = 1):
+#
+    if magnificationType == 1:
+#
+# t_i = 1. and t_f is total factor of magnification.
+# So, 1D-array 'strengthLens[0:stepsInMgnfctn]' describes current value of the 
+# strength (knll) of lens for current step n; Then 1D-array 'magnifications[0:stepsInMgnfctn]'
+# describe magnification factor to pass from old_knll_value = knll[n-1] to 
+# new_knll_value = knll[n] on step n:
+#    new_knll_value = magnifications[n]*old_knll_value .
+# Factor 'magnifications' is the same for all lens of nonlinear insertion!
+#
+        strengthLens = np.zeros(stepsInMgnfctn)
+        magnifications = np.zeros(stepsInMgnfctn)
+        totalMgnfcn = 1.
+#
+# For absolute magnification  (magnificationType = 2):
+#
+    if magnificationType == 2:
+#
+# parameters t_i and t_f characterize only central lens of nonlinear insertion. 
+# So, the strength of 't' for all rest lenses must be recalculate in corresponding  
+# distribution of beta-function inside the insertion by using method 'generate_lens'. 
+# So, 1D-array 'strengthLens[0:stepsInMgnfctn]' describes value of the strength 
+# of central lens only for current step n. 
+# 
+        strengthLens = np.zeros(stepsInMgnfctn)
     for n in range(stepsInMgnfctn):
         if law == 1:
 # 1) Linear: for step number n
-#           t(n) = t_0 + (t_f-t_0)*n/(N-1) for n = 0,1,...,N-1 .
-            strengthLens[n] = 1.+n*(mgnfctnFctr-1.)/(stepsInMgnfctn-1)
+#           t(n) = t_i + (t_f-t_i)*n/(N-1) for n = 0,1,...,N-1 .
+            strengthLens[n] = t_i+n*(t_f-t_i)/(stepsInMgnfctn-1)
         elif law == 2:
 # 2) Parabolic: for step number n
-#           t(n) = t_0 + (t_f-t_0)*n^2/(N-1)^2 for n = 0,1,...,N-1 .
-            strengthLens[n] = 1.+n**2*(mgnfctnFctr-1.)/(stepsInMgnfctn-1)**2
+#           t(n) = t_i + (t_f-t_i)*n^2/(N-1)^2 for n = 0,1,...,N-1 .
+            strengthLens[n] = t_i+n**2*(t_f-t_i)/(stepsInMgnfctn-1)**2
         elif law == 3:
 # 3) Smooth sign-function: for step number n
-#           t(n) = .5*(t_0+t_f) + .5*(t_f-t_0)*tanh(x(n)), where
+#           t(n) = .5*(t_i+t_f) + .5*(t_f-t_i)*tanh(x(n)), where
 #           x(n) = (6*n-3*(N-1))/(N-1) for n=0,1,...,N-1 .
 # In this approach x(0) = -3., x(N-1) = 3.; so, tanh(3.) = - tanh(-3.) = .9951
             x = (6.*n-3.*(stepsInMgnfctn-1))/(stepsInMgnfctn-1)
-            strengthLens[n] = .5*(1.+mgnfctnFctr)+.5*(mgnfctnFctr-1.)*np.tanh(x)
+            strengthLens[n] = .5*(t_i+t_f)+.5*(t_f-t_i)*np.tanh(x)
 # For checking:
 #    for n in range(stepsInMgnfctn):
 #        print "strengthLens[{}] = {}".format(n,strengthLens[n])
-    totalMgnfcn = 1.
-    for n in range(stepsInMgnfctn):
-        if n == 0:
-            magnifications[n] = strengthLens[n]
-        else:
-            magnifications[n] = strengthLens[n]/strengthLens[n-1]
-#        print "magnifications[{}] = {}".format(n,magnifications[n])
-        totalMgnfcn *= magnifications[n]
-    print "Total relative magnification (RF) will be = ",totalMgnfcn
-    
+        if magnificationType == 1:
+            if n == 0:
+                magnifications[n] = strengthLens[n]
+            else:
+                magnifications[n] = strengthLens[n]/strengthLens[n-1]
+            print "magnifications[{}] = {}".format(n,magnifications[n])
+            totalMgnfcn *= magnifications[n]
+    if magnificationType == 1:
+        print "Total relative magnification (RM) will be = ",totalMgnfcn
+
 # Lattice:
 
     fileIOTA = ".../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx"
@@ -560,11 +701,17 @@ def simulation():
 # Args of 'Ramp_actions' method are: multiplier for knl and outputFlag 
 #
             stepOfMgnfcn += 1
-            knlMultiplier = magnifications[stepOfMgnfcn]
-            print "strengthLens[",stepOfMgnfcn,"] = ",strengthLens[stepOfMgnfcn]
+            if magnificationType == 1:
+                knlMultiplier = magnifications[stepOfMgnfcn]
+                print "magnifications[",stepOfMgnfcn,"] = ",magnifications[stepOfMgnfcn]
+                ramp_actions = Ramp_actions(knlMultiplier, magnificationType,updateOutputFlag)   
+            if magnificationType == 2:
+                dataInsertion = \
+                NonlinearInsertion(insrtn_l0, insrtn_mu0, strengthLens[stepOfMgnfcn], insrtn_c, num_lens). \
+                generate_lens()
+                knll_lens = dataInsertion.knll
             nUpdate = 0
             print "\n              After {} turns:\n".format(turnNumber)
-            ramp_actions = Ramp_actions(knlMultiplier, updateOutputFlag)   
             propagatorCrrnt = propagator.propagate(bunch_simulator, ramp_actions, 1, 1, 0)
             timeEnd = os.times()
             timeUpdateAndPlot = float(timeEnd[0] - timeStart[0])              # CPU time in seconds
@@ -580,12 +727,21 @@ def simulation():
 # End of main method 'simulation'
 
 fileIOTA = ".../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx"
+# fileIOTA = ".../ioptics/ioptics/lattices/Iota8-4/lattice_8-4_1IO_nll_forTest.madx"
 print "\nIOTA Nonlinear lattice: {} \n".format(fileIOTA)
 lattice = synergia.lattice.MadX_reader().get_lattice("iota", \
     "../ioptics/ioptics/lattices/Iota8-2/lattice_1IO_nll_center.madx")
+# lattice = synergia.lattice.MadX_reader().get_lattice("iota", \
+#    "../ioptics/ioptics/lattices/Iota8-4_1IO_nll_forTest.madx")
 
 stepperCrrnt = synergia.simulation.Independent_stepper_elements(lattice,2,3)
 lattice_simulator_Crrnt = stepperCrrnt.get_lattice_simulator()
+# To recognize attributes of 'bunchParticles':
+printAttributes(lattice_simulator_Crrnt,'lattice_simulator_Crrnt', 'stepperCrrnt.get_lattice_simulator()')
+slicesHelp = lattice_simulator_Crrnt.get_slices()
+# To recognize attributes of 'slicesHelp':
+printAttributes(slicesHelp,'slicesHelp', 'lattice_simulator_Crrnt.get_slices()')
+
 # Bunch:
 bunch_origin = synergia.optics.generate_matched_bunch_transverse(lattice_simulator_Crrnt, 1e-6, \
                                                           1e-6, 1e-3, 1e-4, 1e9, 1000, seed=1234)
@@ -614,3 +770,4 @@ while selection == 'loop':
         selection = 'loop'
 #    if selection == 'no':
 #        exit(0)
+
