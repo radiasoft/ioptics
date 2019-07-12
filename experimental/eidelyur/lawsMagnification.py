@@ -1,3 +1,13 @@
+#
+# This script is used to plot different type of magnification of the parameter 't'.
+# 
+# Script will be used as corresponding part of the script 
+#                variabledNLsimulation_v2.py 
+# to simulate IOTA ring with possibility to update the strength of the
+# nonlinear lenses 'in-fly' of simulation
+#
+# Version 0, Yury Eidelman, 07/11/2019
+#
 import os, sys
 import inspect
 import numpy as np
@@ -34,7 +44,7 @@ def lawsMagnification(mgnfctnFctr,steps):
     
     ax0 = plt.subplot(gs[0])
     plt.plot(step,tLin,'-x',color='r')
-    x0Title = 'Linear magnification'
+    x0Title = 'Linear Magnification'
     ax0.set_title(x0Title,fontsize='16')
     ax0.set_xlim([-1,steps+1])
     ax0.set_ylim([tMin,tMax])
@@ -44,7 +54,7 @@ def lawsMagnification(mgnfctnFctr,steps):
     
     ax1 = plt.subplot(gs[1])
     plt.plot(step,tPar,'-x',color='r')
-    x1Title = 'Parabolic magnification'
+    x1Title = 'Parabolic Magnification'
     ax1.set_title(x1Title,fontsize='16')
     ax1.set_xlim([-1,steps+1])
     ax1.set_ylim([tMin,tMax])
@@ -54,7 +64,7 @@ def lawsMagnification(mgnfctnFctr,steps):
     
     ax2 = plt.subplot(gs[2])
     plt.plot(step,tSSF,'-x',color='r')
-    x2Title = 'Smooth sign-function magnification'
+    x2Title = 'Smooth Sign-function Magnification'
     ax2.set_title(x2Title,fontsize='16')
     ax2.set_xlim([-1,steps+1])
     ax2.set_ylim([tMin,tMax])
