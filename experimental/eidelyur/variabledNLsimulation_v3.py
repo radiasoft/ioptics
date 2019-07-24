@@ -103,17 +103,25 @@ def plotcoordDistr(bunchParticles,saveFlag,turn,knllCentrLens):
     ax0.set_ylabel('Y, mm',color='m',fontsize='14')
     ax0.grid(True)
     
+#    ax1 = plt.subplot(gs[1])
+#    plt.plot(newCoordinates[0,:],newCoordinates[1,:],'.',color='b')
+#    x1Title = "X,mm: <> = {:.3f} +- {:.3f}\nX\',mrad: <> = {:.3f} +- {:.3f}". \
+#              format(meanX,stdX,meanPX,stdPX)
+#    ax1.set_title(x1Title,color='m',fontsize='14')
+#    ax1.set_xlim([-xmax,xmax])
+#    ax1.set_ylim([-xpmax,xpmax])
+#    ax1.set_xlabel('X, mm',color='m',fontsize='14')
+#    ax1.set_ylabel('X\', mrad',color='m',fontsize='14')
+#    ax1.grid(True)
+
     ax1 = plt.subplot(gs[1])
-    plt.plot(newCoordinates[0,:],newCoordinates[1,:],'.',color='b')
-    x1Title = "X,mm: <> = {:.3f} +- {:.3f}\nX\',mrad: <> = {:.3f} +- {:.3f}". \
-              format(meanX,stdX,meanPX,stdPX)
+    ax1.hist(newCoordinates[2,:], color='r', bins=30)    
+    ax1.grid(axis='y', alpha=0.75)
+    ax1.set_xlabel('Y, mm',color='m',fontsize='14')
+    ax1.set_ylabel('Particles',color='m',fontsize='14')
+    x1Title = "Vertical Beam Disribution \n Total Particles: {}".format(numbPartcls)
     ax1.set_title(x1Title,color='m',fontsize='14')
-    ax1.set_xlim([-xmax,xmax])
-    ax1.set_ylim([-xpmax,xpmax])
-    ax1.set_xlabel('X, mm',color='m',fontsize='14')
-    ax1.set_ylabel('X\', mrad',color='m',fontsize='14')
-    ax1.grid(True)
-    
+
     ax2 = plt.subplot(gs[2])
     plt.plot(newCoordinates[2,:],newCoordinates[3,:],'.',color='r')
     x2Title = "Y,mm: <> = {:.3f} +- {:.3f}\nY\',mrad: <> = {:.3f} +- {:.3f}". \
@@ -162,7 +170,7 @@ def plotTracks(tracksCoords,numberTracks):
     ax0.set_ylim([-xmax,xmax])
     ax0.set_xlabel('Turn',color='m',fontsize='14')
     ax0.set_ylabel('X, mm',color='m',fontsize='14')
-    plt.legend(['Particle 0','Particle 1','Particle 2','Particle 3','Particle 4'],loc='upper left')
+    ax0.legend(['Particle 0','Particle 1','Particle 2','Particle 3','Particle 4'],loc='upper left')
     ax0.grid(True)
 
     ax1 = plt.subplot(gs[1])
@@ -175,7 +183,7 @@ def plotTracks(tracksCoords,numberTracks):
     ax1.set_ylim([-ymax,ymax])
     ax1.set_xlabel('Turn',color='m',fontsize='14')
     ax1.set_ylabel('Y, mm',color='m',fontsize='14')
-    plt.legend(['Particle 0','Particle 1','Particle 2','Particle 3','Particle 4'],loc='upper left')
+    ax1.legend(['Particle 0','Particle 1','Particle 2','Particle 3','Particle 4'],loc='upper left')
     ax1.grid(True)
        
 #    fig.canvas.set_window_title('Synergia Phase Space Distribution')
@@ -583,12 +591,16 @@ def plotResult_1(knll_strength,t_strength,vertQuadMomentum,steps):
     
     ax_11 = plt.subplot(gs_11[0])
     step = range(steps)
-    plt.plot(step,knll_strength_plot,'-x',color='r')
+    ax_11.plot(step,knll_strength_plot,'-',color='r')
     ax_11.set_xlabel('Ramp Step',color='m',fontsize=14)
-    ax_11.set_ylabel('10^6*knll, m',color='m',fontsize=14)
-    title = "Central Nonlinear Lens: knll"
+    ax_11.set_ylabel('10^6*knll, m',color='r',fontsize=14)
+    title = "Central Nonlinear Lens: 'knll' and 't'"
     ax_11.set_title(title,color='m',fontsize=14)
     ax_11.grid(True)
+
+    ax_11_2 = ax_11.twinx()  # instantiate a second axes that shares the same x-axis
+    ax_11_2.plot(step,t_strength,'x',color='b')
+    ax_11_2.set_ylabel('t',color='b',fontsize=14)
 
     ax_12 = plt.subplot(gs_11[1])
     plt.plot(step,vertQuadMomentum,'-x',color='r')
